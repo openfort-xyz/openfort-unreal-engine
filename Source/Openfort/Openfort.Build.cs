@@ -11,7 +11,6 @@ public class Openfort : ModuleRules
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
-				"External"
 				// ... add public include paths required here ...
 			}
 			);
@@ -40,6 +39,9 @@ public class Openfort : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"Http",
+				"Json",
+				"JsonUtilities"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
