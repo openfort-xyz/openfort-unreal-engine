@@ -2,10 +2,6 @@
 
 
 #include "../Public/OpenfortComponent.h"
-#include "Misc/MessageDialog.h"
-
-
-class FString API_KEY = TEXT("AAAA");
 
 // Sets default values for this component's properties
 UOpenfortComponent::UOpenfortComponent() //: apiClient(new ApiClient(API_KEY, ApiClient::DEFAULT_BASE_PATH))
@@ -39,6 +35,11 @@ void UOpenfortComponent::GenerateKey()
 	keyPair.Generate();
 }
 
+void UOpenfortComponent::SetApiKey(const FString& apiKey)
+{
+	API_KEY = apiKey;
+}
+
 FText UOpenfortComponent::SignMessage(const FString& message)
 {
 	return FText::FromString(keyPair.Sign(std::string(TCHAR_TO_UTF8(*message))).c_str());
@@ -47,5 +48,11 @@ FText UOpenfortComponent::SignMessage(const FString& message)
 void UOpenfortComponent::SignatureSession(const FString& session, const FString& signature)
 {
 	ApiClient client = ApiClient(API_KEY);
-	client.SignatureSession(session, signature);
+	client.SignatureSession(session, signature, OnSignatureSessionComplete);
+}
+
+void UOpenfortComponent::SignatureTransactionIntent(const FString& transactionIntentId, const FString& signature)
+{
+	ApiClient client = ApiClient(API_KEY);
+	client.SignatureTransactionIntent(transactionIntentId, signature, OnSignatureTransactionIntentComplete);
 }

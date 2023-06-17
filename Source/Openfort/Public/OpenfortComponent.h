@@ -6,13 +6,14 @@
 #include "Components/ActorComponent.h"
 #include "KeyPair.h"
 #include "ApiClient.h"
+#include "Entities.h"
 #include "OpenfortComponent.generated.h"
 
-struct SessionParams
-{
-public:
-	std::string session;
-};
+class UOpenfortComponent;
+DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam(FSignatureSessionComplete, UOpenfortComponent, OnSignatureSessionComplete, FSignatureSessionResponse, Response);
+
+class UOpenfortComponent;
+DECLARE_DYNAMIC_MULTICAST_SPARSE_DELEGATE_OneParam(FSignatureTransactionIntentComplete, UOpenfortComponent, OnSignatureSessionComplete, FTransactionIntentResponse, Response);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OPENFORT_API UOpenfortComponent : public UActorComponent
@@ -24,9 +25,13 @@ public:
 	UOpenfortComponent();
 
 private:
+	class FString API_KEY;
+
 	ApiClient apiClient;
 
 	ApiClient GetApiClient();
+
+	KeyPair keyPair;
 
 protected:
 	// Called when the game starts
@@ -35,8 +40,9 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	KeyPair keyPair;
+	
+	UFUNCTION(BlueprintCallable)
+	void SetApiKey(const FString& apiKey);		
 
 	/** Generates a new key pair */
 	UFUNCTION(BlueprintCallable, Category = "Session")
@@ -48,4 +54,14 @@ public:
 	/** Sends a request to session signature endpoint */
 	UFUNCTION(BlueprintCallable, Category = "Api")
 	void SignatureSession(const FString& session, const FString& signature); 
+
+	/** Sends a request to session signature endpoint */
+	UFUNCTION(BlueprintCallable, Category = "Api")
+	void SignatureTransactionIntent(const FString& transactionIntentId, const FString& signature); 
+	
+	UPROPERTY(BlueprintAssignable)
+    FSignatureSessionComplete OnSignatureSessionComplete;
+	
+	UPROPERTY(BlueprintAssignable)
+    FSignatureTransactionIntentComplete OnSignatureTransactionIntentComplete;
 };
