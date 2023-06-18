@@ -46,7 +46,17 @@ public:
 
 	/** Generates a new key pair */
 	UFUNCTION(BlueprintCallable, Category = "Session")
-	void GenerateKey();		
+	bool GenerateSessionKey();		
+
+	/** Generates a new key pair */
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	bool InitializeSessionKey(const FString& privateKey);
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	FString GetSessionPublicKeyHex();
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
+	FString GetSessionPrivateKeyHex();
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
 	FText SignMessage(const FString& message);		

@@ -30,9 +30,24 @@ void UOpenfortComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	// ...
 }
 
-void UOpenfortComponent::GenerateKey()
+bool UOpenfortComponent::GenerateSessionKey()
 {
-	keyPair.Generate();
+	return keyPair.Generate();
+}
+
+bool UOpenfortComponent::InitializeSessionKey(const FString& secKeyHex)
+{
+	return keyPair.Initialize(std::string(TCHAR_TO_UTF8(*secKeyHex)));
+}
+
+FString UOpenfortComponent::GetSessionPublicKeyHex()
+{
+	return keyPair.GetPublicKeyHex().c_str();
+}
+
+FString UOpenfortComponent::GetSessionPrivateKeyHex()
+{
+	return keyPair.GetPrivateKeyHex().c_str();
 }
 
 void UOpenfortComponent::SetApiKey(const FString& apiKey)
