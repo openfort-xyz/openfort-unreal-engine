@@ -15,6 +15,6 @@ public:
 	bool Initialize(std::string);
 	std::string GetPrivateKeyHex();
 	std::string GetPublicKeyHex();
+	std::string GetAddress();
 	std::string Sign(std::string);
-	std::string Address();
 };

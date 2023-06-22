@@ -59,6 +59,9 @@ public:
 	FString GetSessionPrivateKeyHex();
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
+	FString GetSessionKeyAddress();
+
+	UFUNCTION(BlueprintCallable, Category = "Session")
 	FText SignMessage(const FString& message);		
 
 	/** Sends a request to session signature endpoint */

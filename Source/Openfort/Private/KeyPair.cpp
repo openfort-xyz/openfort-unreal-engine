@@ -58,6 +58,22 @@ std::string KeyPair::GetPublicKeyHex()
 	return "0x" + HexConverter::ToHexString(pubkeySerialized, len);
 }
 
+std::string KeyPair::GetAddress()
+{
+	secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
+	unsigned char pubkeySerialized[65] = { 0 };
+	size_t len = sizeof(pubkeySerialized);
+	secp256k1_ec_pubkey_serialize(ctx, pubkeySerialized, &len, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+
+	uint8_t hashedPubKeyBytes[32] = { 0 };
+	Keccak256::getHash(&pubkeySerialized[1], 64, hashedPubKeyBytes);
+
+	const std::string hashedPubKeyString = HexConverter::ToHexString(hashedPubKeyBytes, 32).substr(24);
+
+	secp256k1_context_destroy(ctx);
+	return "0x" + hashedPubKeyString;
+}
+
 std::string KeyPair::Sign(std::string messageHex)
 {
 	unsigned char hash2[32];
@@ -75,21 +91,3 @@ std::string KeyPair::Sign(std::string messageHex)
 	secp256k1_context_destroy(ctx);
 	return "0x" + HexConverter::ToHexString(serialized_signature, 65);
 }
-
-std::string KeyPair::Address()
-{
-	secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_NONE);
-	unsigned char pubkeySerialized[65] = { 0 };
-	size_t len = sizeof(pubkeySerialized);
-	secp256k1_ec_pubkey_serialize(ctx, pubkeySerialized, &len, &pubkey, SECP256K1_EC_UNCOMPRESSED);
-
-	uint8_t hashedPubKeyBytes[32] = { 0 };
-	Keccak256::getHash(&pubkeySerialized[1], 64, hashedPubKeyBytes);
-
-	const std::string hashedPubKeyString = HexConverter::ToHexString(hashedPubKeyBytes, 32).substr(24);
-
-	secp256k1_context_destroy(ctx);
-	return "0x" + hashedPubKeyString;
-}
-
-

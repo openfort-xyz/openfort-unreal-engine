@@ -50,6 +50,11 @@ FString UOpenfortComponent::GetSessionPrivateKeyHex()
 	return keyPair.GetPrivateKeyHex().c_str();
 }
 
+FString UOpenfortComponent::GetSessionKeyAddress()
+{
+	return keyPair.GetAddress().c_str();
+}
+
 void UOpenfortComponent::SetApiKey(const FString& apiKey)
 {
 	API_KEY = apiKey;
