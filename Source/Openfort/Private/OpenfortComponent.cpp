@@ -60,9 +60,9 @@ void UOpenfortComponent::SetApiKey(const FString& apiKey)
 	API_KEY = apiKey;
 }
 
-FText UOpenfortComponent::SignMessage(const FString& message)
+FString UOpenfortComponent::SignMessage(const FString& message)
 {
-	return FText::FromString(keyPair.Sign(std::string(TCHAR_TO_UTF8(*message))).c_str());
+	return keyPair.Sign(std::string(TCHAR_TO_UTF8(*message))).c_str();
 }
 
 void UOpenfortComponent::SignatureSession(const FString& session, const FString& signature)

@@ -62,7 +62,7 @@ public:
 	FString GetSessionKeyAddress();
 
 	UFUNCTION(BlueprintCallable, Category = "Session")
-	FText SignMessage(const FString& message);		
+	FString SignMessage(const FString& message);		
 
 	/** Sends a request to session signature endpoint */
 	UFUNCTION(BlueprintCallable, Category = "Api")
