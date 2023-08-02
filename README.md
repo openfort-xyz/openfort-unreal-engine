@@ -20,7 +20,7 @@
   </h4>
 </div>
 
-[banner-image]: .github/img/OpenfortRed.png
+[banner-image]: https://strapi-oube.onrender.com/uploads/1_38e40747b6.png
 
 # Openfort UE5 SDK
 
