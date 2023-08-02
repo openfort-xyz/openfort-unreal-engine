@@ -1,4 +1,4 @@
-# openfort-unreal-engine-5
+# Openfort UE5 SDK
 
 ## Installation
 1. Create a `Plugins` folder at the root of your project
