@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+    <prebuildCopies>
+        <copyDir src="$S(PluginDir)/Private/Openfort/Android/Java" dst="$S(BuildDir)/src/com/openfort/unreal" />
+    </prebuildCopies>
+    <proguardAdditions>
+        <insert>
+            <!-- Disable obfuscation -->
+            -dontwarn com.openfort.unreal
+            -keep class com.openfort.unreal.** { *; }
+            -keep interface com.openfort.unreal.** { *; }
+            -keep public class com.openfort.unreal.OpenfortActivity { public protected *; }
+            -keep public class com.openfort.unreal.CustomTabsController { public protected *; }
+            -keep public class com.openfort.unreal.RedirectActivity { public protected *; }
+
+            -dontwarn androidx.**
+            -keep class androidx.** { *; }
+            -keep interface androidx.** { *; }
+        </insert>
+    </proguardAdditions>
+    <buildGradleAdditions>
+        <insert>
+            android {
+                compileOptions {
+                    sourceCompatibility 1.8
+                    targetCompatibility 1.8
+                }
+            }
+        </insert>
+    </buildGradleAdditions>
+    <androidManifestUpdates>
+        <addElements tag="queries">
+            <intent>
+                <action android:name="android.support.customtabs.action.CustomTabsService" />
+            </intent>
+        </addElements>
+        <addElements tag="application">
+            <activity
+                android:name="com.openfort.unreal.OpenfortActivity"
+                android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation|keyboard|keyboardHidden"
+                android:exported="false"
+                android:launchMode="singleTask"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        </addElements>
+    </androidManifestUpdates>
+    <gameActivityClassAdditions>
+        <insert>
+            public static native void handleDeepLink(String Deeplink);
+
+            public static native void handleOnCustomTabsDismissed(String Url);
+
+            public static void onDeeplinkResult(String url) {
+                handleDeepLink(url);
+            }
+            
+            public static void onCustomTabsDismissed(String url) {
+                handleOnCustomTabsDismissed(url);
+            }
+        </insert>
+    </gameActivityClassAdditions>
+    <buildGradleAdditions>
+        <insert>
+            dependencies {
+                implementation 'androidx.browser:browser:1.7.0'
+            }
+        </insert>
+    </buildGradleAdditions>
+</root>
