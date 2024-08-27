@@ -19,17 +19,3 @@ FString FOpenfortOpenfortSDKInitData::ToJsonString() const
 
 	return OutString;
 }
-
-TOptional<FOpenfortOpenfortSDKInitDeviceFlowData> FOpenfortOpenfortSDKInitDeviceFlowData::FromJsonString(const FString &JsonObjectString)
-{
-	FOpenfortOpenfortSDKInitDeviceFlowData OpenfortSDKConnect;
-
-	if (!FJsonObjectConverter::JsonObjectStringToUStruct(JsonObjectString, &OpenfortSDKConnect, 0, 0))
-	{
-		OPENFORT_WARN("Could not parse response from JavaScript into the expected "
-					  "OpenfortSDK connect format")
-		return TOptional<FOpenfortOpenfortSDKInitDeviceFlowData>();
-	}
-
-	return OpenfortSDKConnect;
-}

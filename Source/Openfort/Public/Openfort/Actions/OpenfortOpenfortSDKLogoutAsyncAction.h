@@ -18,7 +18,7 @@ class OPENFORT_API UOpenfortOpenfortSDKLogoutAsyncAction : public UOpenfortBluep
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortOpenfortSDKLogoutAsyncAction *Logout(UObject *WorldContextObject, bool DoHardLogout = true);
+	static UOpenfortOpenfortSDKLogoutAsyncAction *Logout(UObject *WorldContextObject);
 
 	virtual void Activate() override;
 

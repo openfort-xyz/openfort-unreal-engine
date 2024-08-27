@@ -6,13 +6,12 @@
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 
-UOpenfortOpenfortSDKRequestWalletSessionKey *UOpenfortOpenfortSDKRequestWalletSessionKey::RequestWalletSessionKey(
-	UObject *WorldContextObject)
+UOpenfortOpenfortSDKRequestWalletSessionKey *UOpenfortOpenfortSDKRequestWalletSessionKey::RequestWalletSessionKey(UObject *WorldContextObject, const FRegisterSessionRequest &Request)
 {
 	UOpenfortOpenfortSDKRequestWalletSessionKey *RequestWalletSessionKeyBPNode = NewObject<UOpenfortOpenfortSDKRequestWalletSessionKey>();
 
 	RequestWalletSessionKeyBPNode->WorldContextObject = WorldContextObject;
-
+	RequestWalletSessionKeyBPNode->TransactionRequest = Request;
 	return RequestWalletSessionKeyBPNode;
 }
 
@@ -37,7 +36,7 @@ void UOpenfortOpenfortSDKRequestWalletSessionKey::DoRequestWalletSessionKey(TWea
 
 	if (OpenfortSDK.IsValid())
 	{
-		OpenfortSDK->RequestWalletSessionKey(UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKRequestWalletSessionKey::OnRequestWalletSessionKeyResponse));
+		OpenfortSDK->SendSignatureSessionRequest(TransactionRequest, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKRequestWalletSessionKey::OnRequestWalletSessionKeyResponse));
 	}
 }
 

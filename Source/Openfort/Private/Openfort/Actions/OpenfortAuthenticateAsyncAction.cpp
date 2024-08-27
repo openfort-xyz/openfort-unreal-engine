@@ -6,24 +6,12 @@
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 
-UOpenfortConnectionAsyncActions *UOpenfortConnectionAsyncActions::Authenticate(UObject *WorldContextObject, bool UseCachedSession)
-{
-	UOpenfortConnectionAsyncActions *OpenfortSDKInitBlueprintNode = NewObject<UOpenfortConnectionAsyncActions>();
-
-	OpenfortSDKInitBlueprintNode->WorldContextObject = WorldContextObject;
-	OpenfortSDKInitBlueprintNode->bUseCachedSession = UseCachedSession;
-	OpenfortSDKInitBlueprintNode->bIsAuthenticate = false;
-
-	return OpenfortSDKInitBlueprintNode;
-}
-
-UOpenfortConnectionAsyncActions *UOpenfortConnectionAsyncActions::AuthenticatePKCE(UObject *WorldContextObject)
+UOpenfortConnectionAsyncActions *UOpenfortConnectionAsyncActions::AuthenticateWithOAuth(UObject *WorldContextObject)
 {
 	UOpenfortConnectionAsyncActions *OpenfortSDKInitBlueprintNode = NewObject<UOpenfortConnectionAsyncActions>();
 
 	OpenfortSDKInitBlueprintNode->WorldContextObject = WorldContextObject;
 	OpenfortSDKInitBlueprintNode->bIsAuthenticate = false;
-	OpenfortSDKInitBlueprintNode->bIsPKCE = true;
 
 	return OpenfortSDKInitBlueprintNode;
 }
@@ -39,25 +27,17 @@ void UOpenfortConnectionAsyncActions::Activate()
 		return;
 	}
 
-	GetSubsystem()->WhenReady(this, &UOpenfortConnectionAsyncActions::DoConnect);
+	GetSubsystem()->WhenReady(this, &UOpenfortConnectionAsyncActions::DoAuthenticate);
 }
 
-void UOpenfortConnectionAsyncActions::DoConnect(TWeakObjectPtr<UOpenfortJSConnector> JSConnector)
+void UOpenfortConnectionAsyncActions::DoAuthenticate(TWeakObjectPtr<UOpenfortJSConnector> JSConnector)
 {
 	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
 
 	if (OpenfortSDK.IsValid())
 	{
-		if (bIsPKCE)
-		{
-#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
-			OpenfortSDK->AuthenticatePKCE(UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortConnectionAsyncActions::OnConnect));
-#endif
-		}
-		else
-		{
-			OpenfortSDK->Authenticate(bUseCachedSession, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortConnectionAsyncActions::OnConnect));
-		}
+		FOAuthInitRequest Request;
+		OpenfortSDK->AuthenticateWithOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortConnectionAsyncActions::OnAuthenticate));
 	}
 	else
 	{
@@ -65,7 +45,7 @@ void UOpenfortConnectionAsyncActions::DoConnect(TWeakObjectPtr<UOpenfortJSConnec
 	}
 }
 
-void UOpenfortConnectionAsyncActions::OnConnect(FOpenfortOpenfortSDKResult Result)
+void UOpenfortConnectionAsyncActions::OnAuthenticate(FOpenfortOpenfortSDKResult Result)
 {
 	if (Result.Success)
 	{

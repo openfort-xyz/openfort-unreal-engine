@@ -5,13 +5,17 @@
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "Openfort/OpenfortSubsystem.h"
 
-UOpenfortOpenfortSDKInitializationAsyncAction *UOpenfortOpenfortSDKInitializationAsyncAction::InitializeOpenfortSDK(UObject *WorldContextObject, const FString &ClientID, const FString &RedirectUri, const FString &LogoutUri)
+UOpenfortOpenfortSDKInitializationAsyncAction *UOpenfortOpenfortSDKInitializationAsyncAction::InitializeOpenfortSDK(UObject *WorldContextObject, const FString &PublishableKey, const FString &ShieldPublishableKey, const FString ShieldEncryptionKey, const bool &BShieldDebug, const FString &BackendUrl, const FString &IframeUrl, const FString &ShieldUrl)
 {
 	UOpenfortOpenfortSDKInitializationAsyncAction *OpenfortSDKInitBlueprintNode = NewObject<UOpenfortOpenfortSDKInitializationAsyncAction>();
 
-	OpenfortSDKInitBlueprintNode->ClientId = ClientID;
-	OpenfortSDKInitBlueprintNode->RedirectUri = RedirectUri;
-	OpenfortSDKInitBlueprintNode->LogoutUri = LogoutUri;
+	OpenfortSDKInitBlueprintNode->PublishableKey = PublishableKey;
+	OpenfortSDKInitBlueprintNode->ShieldPublishableKey = ShieldPublishableKey;
+	OpenfortSDKInitBlueprintNode->ShieldEncryptionKey = ShieldEncryptionKey;
+	OpenfortSDKInitBlueprintNode->ShieldUrl = ShieldUrl;
+	OpenfortSDKInitBlueprintNode->BShieldDebug = BShieldDebug;
+	OpenfortSDKInitBlueprintNode->BackendUrl = BackendUrl;
+	OpenfortSDKInitBlueprintNode->IframeUrl = IframeUrl;
 	OpenfortSDKInitBlueprintNode->WorldContextObject = WorldContextObject;
 
 	return OpenfortSDKInitBlueprintNode;
@@ -33,7 +37,7 @@ void UOpenfortOpenfortSDKInitializationAsyncAction::DoInit(TWeakObjectPtr<UOpenf
 	// Get OpenfortSDK
 	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
 	// Run Initialize
-	OpenfortSDK->Initialize(FOpenfortOpenfortSDKInitData{ClientId, RedirectUri, LogoutUri}, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKInitializationAsyncAction::OnInitialized));
+	OpenfortSDK->Initialize(FOpenfortOpenfortSDKInitData{PublishableKey, ShieldPublishableKey, ShieldEncryptionKey, ShieldUrl, BShieldDebug, BackendUrl, IframeUrl}, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKInitializationAsyncAction::OnInitialized));
 }
 
 void UOpenfortOpenfortSDKInitializationAsyncAction::OnInitialized(FOpenfortOpenfortSDKResult Result)

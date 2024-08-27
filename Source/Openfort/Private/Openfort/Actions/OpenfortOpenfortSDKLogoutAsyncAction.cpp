@@ -6,12 +6,11 @@
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 
-UOpenfortOpenfortSDKLogoutAsyncAction *UOpenfortOpenfortSDKLogoutAsyncAction::Logout(UObject *WorldContextObject, bool DoHardLogout)
+UOpenfortOpenfortSDKLogoutAsyncAction *UOpenfortOpenfortSDKLogoutAsyncAction::Logout(UObject *WorldContextObject)
 {
 	UOpenfortOpenfortSDKLogoutAsyncAction *OpenfortSDKInitBlueprintNode = NewObject<UOpenfortOpenfortSDKLogoutAsyncAction>();
 
 	OpenfortSDKInitBlueprintNode->WorldContextObject = WorldContextObject;
-	OpenfortSDKInitBlueprintNode->bDoHardLogout = DoHardLogout;
 
 	return OpenfortSDKInitBlueprintNode;
 }
@@ -35,7 +34,7 @@ void UOpenfortOpenfortSDKLogoutAsyncAction::DoLogout(TWeakObjectPtr<UOpenfortJSC
 {
 	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
 
-	OpenfortSDK->Logout(bDoHardLogout, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKLogoutAsyncAction::OnLogoutResponse));
+	OpenfortSDK->Logout(UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKLogoutAsyncAction::OnLogoutResponse));
 }
 
 void UOpenfortOpenfortSDKLogoutAsyncAction::OnLogoutResponse(FOpenfortOpenfortSDKResult Result) const

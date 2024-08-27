@@ -20,14 +20,18 @@ class OPENFORT_API UOpenfortOpenfortSDKInitializationAsyncAction : public UOpenf
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortOpenfortSDKInitializationAsyncAction *InitializeOpenfortSDK(UObject *WorldContextObject, const FString &ClientID, const FString &RedirectUri, const FString &LogoutUri);
+	static UOpenfortOpenfortSDKInitializationAsyncAction *InitializeOpenfortSDK(UObject *WorldContextObject, const FString &PublishableKey, const FString &ShieldPublishableKey, const FString ShieldEncryptionKey, const bool &BShieldDebug, const FString &BackendUrl, const FString &IframeUrl, const FString &ShieldUrl);
 
 	virtual void Activate() override;
 
 private:
-	FString ClientId;
-	FString RedirectUri;
-	FString LogoutUri;
+	FString PublishableKey;
+	FString ShieldPublishableKey;
+	FString ShieldEncryptionKey;
+	FString ShieldUrl;
+	bool BShieldDebug;
+	FString BackendUrl;
+	FString IframeUrl;
 
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKInitializationOutputPin Initialized;

@@ -44,62 +44,27 @@ struct OPENFORT_API FOpenfortOpenfortSDKInitData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString clientId;
+	FString publishableKey;
 
 	UPROPERTY()
-	FString redirectUri;
+	FString shieldPublishableKey;
 
 	UPROPERTY()
-	FString logoutRedirectUri;
+	FString shieldEncryptionKey;
+
+	UPROPERTY()
+	FString shieldUrl;
+
+	UPROPERTY()
+	bool bShieldDebug;
+
+	UPROPERTY()
+	FString backendUrl;
+
+	UPROPERTY()
+	FString iframeUrl;
 
 	FString ToJsonString() const;
-};
-
-USTRUCT()
-struct FOpenfortOpenfortSDKInitDeviceFlowData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString code;
-
-	UPROPERTY()
-	FString deviceCode;
-
-	UPROPERTY()
-	FString url;
-
-	UPROPERTY()
-	float interval = 0;
-
-	static TOptional<FOpenfortOpenfortSDKInitDeviceFlowData> FromJsonString(const FString &JsonObjectString);
-};
-
-USTRUCT()
-struct FOpenfortOpenfortSDKCodeConfirmRequestData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString deviceCode;
-
-	UPROPERTY()
-	float interval = 5;
-
-	UPROPERTY()
-	float timeoutMs = 15 * 60 * 1000;
-};
-
-USTRUCT()
-struct FOpenfortOpenfortSDKConnectPKCEData
-{
-	GENERATED_BODY()
-
-	UPROPERTY()
-	FString authorizationCode;
-
-	UPROPERTY()
-	FString state;
 };
 
 USTRUCT()
@@ -116,35 +81,8 @@ struct OPENFORT_API FOpenfortOpenfortSDKResult
 	FOpenfortJSResponse Response;
 };
 
-USTRUCT(BlueprintType)
-struct FOpenfortAccessListItem
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString address;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TArray<FString> storageKeys;
-};
-
-USTRUCT(BlueprintType)
-struct FNftTransferDetails
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	FString receiver;
-
-	UPROPERTY(BlueprintReadWrite)
-	FString tokenId;
-
-	UPROPERTY(BlueprintReadWrite)
-	FString tokenAddress;
-};
-
-USTRUCT(BlueprintType, meta = (HasNativeBreak = "/Script/Openfort.OpenfortBlueprintLibrary.BreakFZkEvmTransactionReceiptLog"))
-struct OPENFORT_API FZkEvmTransactionReceiptLog
+USTRUCT(BlueprintType, meta = (HasNativeBreak = "/Script/Openfort.OpenfortBlueprintLibrary.BreakFEvmTransactionReceiptLog"))
+struct OPENFORT_API FEvmTransactionReceiptLog
 {
 	GENERATED_BODY()
 
@@ -176,8 +114,8 @@ struct OPENFORT_API FZkEvmTransactionReceiptLog
 	bool removed = false;
 };
 
-USTRUCT(BlueprintType, meta = (HasNativeBreak = "/Script/Openfort.OpenfortBlueprintLibrary.BreakZkEvmTransactionReceipt"))
-struct OPENFORT_API FZkEvmTransactionReceipt
+USTRUCT(BlueprintType, meta = (HasNativeBreak = "/Script/Openfort.OpenfortBlueprintLibrary.BreakEvmTransactionReceipt"))
+struct OPENFORT_API FEvmTransactionReceipt
 {
 	GENERATED_BODY()
 
@@ -203,7 +141,7 @@ struct OPENFORT_API FZkEvmTransactionReceipt
 	FString gasUsed;
 
 	UPROPERTY(BlueprintReadOnly)
-	TArray<FZkEvmTransactionReceiptLog> logs;
+	TArray<FEvmTransactionReceiptLog> logs;
 
 	UPROPERTY()
 	FString logsBloom;

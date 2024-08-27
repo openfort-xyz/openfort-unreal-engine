@@ -6,7 +6,7 @@
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 
-UOpenfortOpenfortSDKExecuteTransactionAsyncAction *UOpenfortOpenfortSDKExecuteTransactionAsyncAction::ExecuteTransaction(UObject *WorldContextObject, const FOpenfortExecuteTransactionRequest &Request)
+UOpenfortOpenfortSDKExecuteTransactionAsyncAction *UOpenfortOpenfortSDKExecuteTransactionAsyncAction::ExecuteTransaction(UObject *WorldContextObject, const FSignatureTransactionIntentRequest &Request)
 {
 	UOpenfortOpenfortSDKExecuteTransactionAsyncAction *OpenfortSDKExecuteTransactionBlueprintNode = NewObject<UOpenfortOpenfortSDKExecuteTransactionAsyncAction>();
 	OpenfortSDKExecuteTransactionBlueprintNode->WorldContextObject = WorldContextObject;
@@ -33,7 +33,7 @@ void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::DoExecuteTransaction(TWe
 	// Get OpenfortSDK
 	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
 	// Run ExecuteTransaction
-	OpenfortSDK->ExecuteTransaction(TransactionRequest, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnExecuteTransactionResponse));
+	OpenfortSDK->SendSignatureTransactionIntentRequest(TransactionRequest, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnExecuteTransactionResponse));
 }
 
 void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnExecuteTransactionResponse(FOpenfortOpenfortSDKResult Result)

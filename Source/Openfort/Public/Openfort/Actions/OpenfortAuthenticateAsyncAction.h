@@ -7,52 +7,38 @@
 #include "OpenfortBlueprintAsyncAction.h"
 #include "OpenfortAuthenticateAsyncAction.generated.h"
 
-/**
- *
- */
 UCLASS()
 class OPENFORT_API UOpenfortConnectionAsyncActions : public UOpenfortBlueprintAsyncAction
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOpenfortSDKConnectOutputPin, FString, ErrorMessage);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOpenfortSDKAuthenticateOutputPin, FString, ErrorMessage);
 
 public:
 	/**
-	 * Log into OpenfortSDK using Device Code Authorisation.
+	 * Authenticate with OpenfortSDK using PKCE flow.
 	 *
-	 * @param	WorldContextObject	World context
-	 * @param	UseCachedSession	Whether to use stored credentials for relogin
+	 * @param    WorldContextObject    World context
 	 *
-	 * @return	A reference to the object represented by this node
+	 * @return    A reference to the object represented by this node
 	 */
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortConnectionAsyncActions *Authenticate(UObject *WorldContextObject, bool UseCachedSession = false);
-
-	/**
-	 * Log into OpenfortSDK using PKCE
-	 *
-	 * @param	WorldContextObject	World context
-	 *
-	 * @return	A reference to the object represented by this node
-	 */
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortConnectionAsyncActions *AuthenticatePKCE(UObject *WorldContextObject);
+	static UOpenfortConnectionAsyncActions *AuthenticateWithOAuth(UObject *WorldContextObject);
 
 	virtual void Activate() override;
 
 private:
-	FOpenfortOpenfortSDKInitDeviceFlowData InitDeviceFlowData;
-
-	void DoConnect(TWeakObjectPtr<class UOpenfortJSConnector> JSConnector);
-	void OnConnect(FOpenfortOpenfortSDKResult Result);
+	void DoAuthenticate(TWeakObjectPtr<class UOpenfortJSConnector> JSConnector);
+	void OnAuthenticate(FOpenfortOpenfortSDKResult Result);
 
 	UPROPERTY(BlueprintAssignable)
-	FOpenfortSDKConnectOutputPin Success;
-	UPROPERTY(BlueprintAssignable)
-	FOpenfortSDKConnectOutputPin Failed;
+	FOpenfortSDKAuthenticateOutputPin Success;
 
-	bool bUseCachedSession = false;
+	UPROPERTY(BlueprintAssignable)
+	FOpenfortSDKAuthenticateOutputPin Failed;
+
 	bool bIsAuthenticate = false;
-	bool bIsPKCE = false;
+
+	UPROPERTY()
+	UObject *WorldContextObject;
 };

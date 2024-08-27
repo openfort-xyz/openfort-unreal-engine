@@ -156,7 +156,21 @@ struct OPENFORT_API FOAuthInitRequestOptions
 
 	bool operator==(const FOAuthInitRequestOptions &Other) const
 	{
-		return QueryParams == Other.QueryParams && RedirectTo == Other.RedirectTo;
+		if (QueryParams.Num() != Other.QueryParams.Num() || RedirectTo != Other.RedirectTo)
+		{
+			return false;
+		}
+
+		for (const auto &Pair : QueryParams)
+		{
+			const FString *OtherValue = Other.QueryParams.Find(Pair.Key);
+			if (!OtherValue || *OtherValue != Pair.Value)
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	bool operator!=(const FOAuthInitRequestOptions &Other) const
@@ -166,16 +180,26 @@ struct OPENFORT_API FOAuthInitRequestOptions
 
 	friend uint32 GetTypeHash(const FOAuthInitRequestOptions &Options)
 	{
-		uint32 Hash = 0;
-		Hash = HashCombine(Hash, GetTypeHash(Options.QueryParams));
-		Hash = HashCombine(Hash, GetTypeHash(Options.RedirectTo));
+		uint32 Hash = GetTypeHash(Options.RedirectTo);
+
+		for (const auto &Pair : Options.QueryParams)
+		{
+			Hash = HashCombine(Hash, GetTypeHash(Pair.Key));
+			Hash = HashCombine(Hash, GetTypeHash(Pair.Value));
+		}
+
 		return Hash;
 	}
 
 	FString ToString() const
 	{
 		FString Result = TEXT("FOAuthInitRequestOptions {\n");
-		Result += TEXT("  QueryParams: ") + FString::Printf(TEXT("%d items"), QueryParams.Num()) + TEXT("\n");
+		Result += TEXT("  QueryParams: {\n");
+		for (const auto &Pair : QueryParams)
+		{
+			Result += FString::Printf(TEXT("    %s: %s\n"), *Pair.Key, *Pair.Value);
+		}
+		Result += TEXT("  }\n");
 		Result += TEXT("  RedirectTo: ") + RedirectTo + TEXT("\n");
 		Result += TEXT("}\n");
 		return Result;
@@ -184,7 +208,14 @@ struct OPENFORT_API FOAuthInitRequestOptions
 	FString ToJson() const
 	{
 		TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
-		JsonObject->SetObjectField(TEXT("QueryParams"), FJsonObjectConverter::UPropertyToJsonObject(GetClass()->FindPropertyByName(TEXT("QueryParams")), &QueryParams));
+
+		TSharedPtr<FJsonObject> QueryParamsObject = MakeShareable(new FJsonObject);
+		for (const auto &Pair : QueryParams)
+		{
+			QueryParamsObject->SetStringField(Pair.Key, Pair.Value);
+		}
+		JsonObject->SetObjectField(TEXT("QueryParams"), QueryParamsObject);
+
 		JsonObject->SetStringField(TEXT("RedirectTo"), RedirectTo);
 
 		FString OutputString;
@@ -209,28 +240,6 @@ struct OPENFORT_API FInitLinkOAuthRequest
 	FInitLinkOAuthRequest() {}
 	FInitLinkOAuthRequest(EOAuthProvider InProvider, const FString &InAuthToken, const FOAuthInitRequestOptions &InOptions)
 		: Provider(InProvider), AuthToken(InAuthToken), Options(InOptions) {}
-};
-
-USTRUCT(BlueprintType)
-struct OPENFORT_API FInitRequest
-{
-	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString PublishableKey;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString ShieldPublishableKey;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString ShieldEncryptionKey;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	bool bShieldDebug;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString BackendUrl;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString IframeUrl;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString ShieldUrl;
-
-	FInitRequest() : bShieldDebug(false) {}
 };
 
 USTRUCT(BlueprintType)
@@ -314,10 +323,10 @@ struct OPENFORT_API FRegisterSessionRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FString Signature;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	TOptional<bool> bOptimistic;
+	bool bOptimistic;
 
-	FRegisterSessionRequest() {}
-	FRegisterSessionRequest(const FString &InSessionId, const FString &InSignature, TOptional<bool> InOptimistic = TOptional<bool>())
+	FRegisterSessionRequest() : bOptimistic(false) {}
+	FRegisterSessionRequest(const FString &InSessionId, const FString &InSignature, bool InOptimistic = false)
 		: SessionId(InSessionId), Signature(InSignature), bOptimistic(InOptimistic) {}
 };
 
@@ -358,12 +367,12 @@ struct OPENFORT_API FSignMessageOptions
 {
 	GENERATED_BODY()
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	TOptional<bool> bHashMessage;
+	bool bHashMessage;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	TOptional<bool> bArrayifyMessage;
+	bool bArrayifyMessage;
 
-	FSignMessageOptions() {}
-	FSignMessageOptions(TOptional<bool> InHashMessage, TOptional<bool> InArrayifyMessage)
+	FSignMessageOptions() : bHashMessage(false), bArrayifyMessage(false) {}
+	FSignMessageOptions(bool InHashMessage, bool InArrayifyMessage)
 		: bHashMessage(InHashMessage), bArrayifyMessage(InArrayifyMessage) {}
 };
 
@@ -419,12 +428,12 @@ struct OPENFORT_API FSignTypedDataRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FTypedDataDomain Domain;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	TMap<FString, TArray<FTypedDataField>> Types;
+	TMap<FString, FString> Types;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	TMap<FString, FString> Value;
 
 	FSignTypedDataRequest() {}
-	FSignTypedDataRequest(const FTypedDataDomain &InDomain, const TMap<FString, TArray<FTypedDataField>> &InTypes, const TMap<FString, FString> &InValue)
+	FSignTypedDataRequest(const FTypedDataDomain &InDomain, const TMap<FString, FString> &InTypes, const TMap<FString, FString> &InValue)
 		: Domain(InDomain), Types(InTypes), Value(InValue) {}
 };
 

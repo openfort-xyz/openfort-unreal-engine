@@ -19,12 +19,12 @@ class OPENFORT_API UOpenfortOpenfortSDKExecuteTransactionAsyncAction : public UO
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortOpenfortSDKExecuteTransactionAsyncAction *ExecuteTransaction(UObject *WorldContextObject, const FOpenfortExecuteTransactionRequest &Request);
+	static UOpenfortOpenfortSDKExecuteTransactionAsyncAction *ExecuteTransaction(UObject *WorldContextObject, const FSignatureTransactionIntentRequest &Request);
 
 	virtual void Activate() override;
 
 private:
-	FOpenfortExecuteTransactionRequest TransactionRequest;
+	FSignatureTransactionIntentRequest TransactionRequest;
 
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKExecuteTransactionOutputPin TransactionSent;

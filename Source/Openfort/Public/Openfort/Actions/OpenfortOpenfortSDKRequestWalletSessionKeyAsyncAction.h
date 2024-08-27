@@ -19,11 +19,13 @@ class OPENFORT_API UOpenfortOpenfortSDKRequestWalletSessionKey : public UOpenfor
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortOpenfortSDKRequestWalletSessionKey *RequestWalletSessionKey(UObject *WorldContextObject);
+	static UOpenfortOpenfortSDKRequestWalletSessionKey *RequestWalletSessionKey(UObject *WorldContextObject, const FRegisterSessionRequest &Request);
 
 	virtual void Activate() override;
 
 private:
+	FRegisterSessionRequest TransactionRequest;
+
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKRequestWalletSessionKeyOutputPin Success;
 	UPROPERTY(BlueprintAssignable)
