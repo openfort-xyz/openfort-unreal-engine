@@ -76,14 +76,13 @@ void UOpenfortOpenfortSDK::VerifyEmail(const FVerifyEmailRequest &Request, const
 	CallJS(OpenfortOpenfortSDKAction::VERIFY_EMAIL, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnVerifyEmailResponse));
 }
 
-void AuthenticateWithOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate);
+void UOpenfortOpenfortSDK::AuthenticateWithOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate)
 {
 	MainResponseDelegate = ResponseDelegate;
 
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_MAC
 	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnInitOAuthResponse));
 #else
-	// Perform InitOAuth
 	FString InitOAuthResponse = InitOAuth(Request);
 	OnInitOAuthResponse(FOpenfortJSResponse(InitOAuthResponse));
 #endif
@@ -201,12 +200,11 @@ void UOpenfortOpenfortSDK::OnInitializeResponse(FOpenfortJSResponse Response)
 		FString Msg;
 		if (Response.success)
 		{
-			SetStateFlags(IPS_INITIALIZED);
 			OPENFORT_LOG("Identity initialization succeeded.")
 		}
 		else
 		{
-			PORTAL_ERR("Identity initialization failed.")
+			OPENFORT_ERR("Identity initialization failed.")
 			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
 		}
 		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{Response.success, Msg, Response});
@@ -349,15 +347,13 @@ void UOpenfortOpenfortSDK::OnLogoutResponse(FOpenfortJSResponse Response)
 		return;
 	}
 
-	if (!IsStateFlagsSet(IPS_HARDLOGOUT))
-	{
-		Message = "Logged out without clearing browser session";
+	Message = "Logged out without clearing browser session";
 
-		OPENFORT_LOG("%s", *Message)
-		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{true, Message});
+	OPENFORT_LOG("%s", *Message)
+	ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{true, Message});
 
-		return;
-	}
+	return;
+
 }
 
 void UOpenfortOpenfortSDK::OnGetAccessTokenResponse(FOpenfortJSResponse Response)
@@ -403,11 +399,6 @@ void UOpenfortOpenfortSDK::OnGetEthereumProviderResponse(FOpenfortJSResponse Res
 void UOpenfortOpenfortSDK::OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response)
 {
 	// Implementation for OnConfigureEmbeddedSignerResponse
-}
-UOpenfortOpenfortSDK::UOpenfortOpenfortSDK()
-{
-	bIsInitialized = false;
-	bIsLoggedIn = false;
 }
 
 void UOpenfortOpenfortSDK::BeginDestroy
