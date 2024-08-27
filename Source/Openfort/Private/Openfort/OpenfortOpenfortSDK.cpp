@@ -1,7 +1,6 @@
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 #include "Openfort/OpenfortJSConnector.h"
-#include "Openfort/OpenfortDataTypes.h"
 #include "JsonObjectConverter.h"
 #include "Openfort/OpenfortSaveGame.h"
 #include "Kismet/GameplayStatics.h"

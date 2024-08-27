@@ -1,11 +1,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
 #include "JsonObjectConverter.h"
+#include "Misc/EngineVersion.h"
+#include "Runtime/Core/Public/HAL/Platform.h"
+#include "UObject/Object.h"
 #include "Openfort/OpenfortJSConnector.h"
 #include "Openfort/OpenfortDataTypes.h"
 #include "Openfort/OpenfortRequests.h"
+
 #include "OpenfortOpenfortSDK.generated.h"
 
 template <typename UStructType>
@@ -103,15 +106,45 @@ protected:
 	bool CheckIsInitialized(const FString &Action, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate) const;
 	void CallJS(const FString &Action, const FString &Data, const FOpenfortOpenfortSDKResponseDelegate &ClientResponseDelegate, const FOpenfortJSResponseDelegate &HandleJSResponse, const bool bCheckInitialized = true);
 	TOptional<FOpenfortOpenfortSDKResponseDelegate> GetResponseDelegate(const FOpenfortJSResponse &Response);
-
+    void OnInitializeResponse(FOpenfortJSResponse Response);
+    void OnLoginResponse(FOpenfortJSResponse Response);
+    void OnSignupResponse(FOpenfortJSResponse Response);
+    void OnLinkEmailPasswordResponse(FOpenfortJSResponse Response);
+    void OnUnlinkEmailPasswordResponse(FOpenfortJSResponse Response);
+    void OnRequestResetPasswordResponse(FOpenfortJSResponse Response);
+    void OnResetPasswordResponse(FOpenfortJSResponse Response);
+    void OnRequestEmailVerificationResponse(FOpenfortJSResponse Response);
+    void OnVerifyEmailResponse(FOpenfortJSResponse Response);
+    void OnUnlinkOAuthResponse(FOpenfortJSResponse Response);
+    void OnPoolOAuthResponse(FOpenfortJSResponse Response);
+    void OnInitLinkOAuthResponse(FOpenfortJSResponse Response);
+    void OnAuthenticateWithThirdPartyProviderResponse(FOpenfortJSResponse Response);
+    void OnInitSiweResponse(FOpenfortJSResponse Response);
+    void OnAuthenticateWithSiweResponse(FOpenfortJSResponse Response);
+    void OnLinkWalletResponse(FOpenfortJSResponse Response);
+    void OnUnlinkWalletResponse(FOpenfortJSResponse Response);
+    void OnStoreCredentialsResponse(FOpenfortJSResponse Response);
+    void OnGetUserResponse(FOpenfortJSResponse Response);
+    void OnLogoutResponse(FOpenfortJSResponse Response);
+    void OnGetAccessTokenResponse(FOpenfortJSResponse Response);
+    void OnValidateAndRefreshTokenResponse(FOpenfortJSResponse Response);
+    void OnSendSignatureTransactionIntentRequestResponse(FOpenfortJSResponse Response);
+    void OnSignMessageResponse(FOpenfortJSResponse Response);
+    void OnSignTypedDataResponse(FOpenfortJSResponse Response);
+    void OnSendSignatureSessionRequestResponse(FOpenfortJSResponse Response);
+    void OnGetEmbeddedStateResponse(FOpenfortJSResponse Response);
+    void OnGetEthereumProviderResponse(FOpenfortJSResponse Response);
+    void OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response);
 private:
 	void OnInitOAuthResponse(FOpenfortJSResponse Response);
 	void LaunchAuthUrl(const FString &Url);
 	void PoolOAuth(const FString &Key);
 	void CompleteAuthenticationFlow(const FString &Uri);
-	void HandleDeepLink(const FString &DeepLink);
 
 	FString RedirectUri;
 	FDelegateHandle DeepLinkHandle;
 	FTimerHandle PoolingTimerHandle;
+   	bool bIsInitialized;
+    bool bIsLoggedIn;
+    FOpenfortOpenfortSDKResponseDelegate MainResponseDelegate;
 };
