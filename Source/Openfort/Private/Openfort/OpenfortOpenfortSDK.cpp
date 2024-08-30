@@ -78,14 +78,10 @@ void UOpenfortOpenfortSDK::VerifyEmail(const FVerifyEmailRequest &Request, const
 
 void UOpenfortOpenfortSDK::AuthenticateWithOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate)
 {
-	MainResponseDelegate = ResponseDelegate;
-
-#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_MAC
-	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnInitOAuthResponse));
-#else
-	FString InitOAuthResponse = InitOAuth(Request);
-	OnInitOAuthResponse(FOpenfortJSResponse(InitOAuthResponse));
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+	DeepResponseDelegate = ResponseDelegate;
 #endif
+	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), DeepResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse));
 }
 
 void UOpenfortOpenfortSDK::InitOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate)
@@ -193,6 +189,51 @@ void UOpenfortOpenfortSDK::ConfigureEmbeddedSigner(const FEmbeddedSignerRequest 
 	CallJS(OpenfortOpenfortSDKAction::CONFIGURE_EMBEDDED_SIGNER, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnConfigureEmbeddedSignerResponse));
 }
 
+void UOpenfortOpenfortSDK::Setup(const TWeakObjectPtr<UOpenfortJSConnector> Connector)
+{
+	OPENFORT_LOG_FUNCSIG
+
+	if (!Connector.IsValid())
+	{
+		OPENFORT_ERR("Invalid JSConnector passed to UOpenfortOpenfortSDK::Setup.")
+		return;
+	}
+
+	JSConnector = Connector.Get();
+}
+
+bool UOpenfortOpenfortSDK::CheckIsInitialized(const FString &Action, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate) const
+{
+
+	OPENFORT_WARN("Attempting action '%s' before OpenfortSDK is initialized", *Action)
+	ResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{false, "OpenfortSDK is not initialized"});
+
+	return true;
+}
+
+void UOpenfortOpenfortSDK::CallJS(const FString &Action, const FString &Data, const FOpenfortOpenfortSDKResponseDelegate &ClientResponseDelegate, const FOpenfortJSResponseDelegate &HandleJSResponse, const bool bCheckInitialized /*= true*/)
+{
+	if (bCheckInitialized && !CheckIsInitialized(Action, ClientResponseDelegate))
+	{
+		return;
+	}
+
+	check(JSConnector.IsValid());
+	const FString Guid = JSConnector->CallJS(Action, Data, HandleJSResponse);
+	ResponseDelegates.Add(Guid, ClientResponseDelegate);
+}
+
+TOptional<UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate> UOpenfortOpenfortSDK::GetResponseDelegate(const FOpenfortJSResponse &Response)
+{
+	FOpenfortOpenfortSDKResponseDelegate ResponseDelegate;
+	if (!ResponseDelegates.RemoveAndCopyValue(Response.requestId, ResponseDelegate))
+	{
+		OPENFORT_WARN("Couldn't find delegate for %s response", *Response.responseFor)
+		return TOptional<FOpenfortOpenfortSDKResponseDelegate>();
+	}
+	return ResponseDelegate;
+}
+
 void UOpenfortOpenfortSDK::OnInitializeResponse(FOpenfortJSResponse Response)
 {
 	if (auto ResponseDelegate = GetResponseDelegate(Response))
@@ -251,29 +292,72 @@ void UOpenfortOpenfortSDK::OnVerifyEmailResponse(FOpenfortJSResponse Response)
 	// Implementation for OnVerifyEmailResponse
 }
 
-void UOpenfortOpenfortSDK::OnInitOAuthResponse(FOpenfortJSResponse Response)
+void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response)
 {
 	if (auto ResponseDelegate = GetResponseDelegate(Response))
 	{
-		if (!Response.success)
+		const auto InitOAuthFlowData = JsonObjectToUStruct<FOpenfortOpenfortSDKInitOAuthData>(Response.JsonObject);
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+		if (DeepResponseDelegate.IsBound())
 		{
-			FString ErrorMsg = Response.Error.IsSet() ? Response.Error->ToString() : Response.JsonObject->GetStringField(TEXT("error"));
-			OPENFORT_ERR("OAuth initialization failed: %s", *ErrorMsg);
-			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, ErrorMsg, Response});
+			FString Msg;
+			bool bSuccess = true;
+
+			if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("result")))
+			{
+				OPENFORT_LOG("Could not get PKCE auth URL from OpenfortSDK.");
+			}
+			else
+			{
+				// Handle deeplink calls
+				OnHandleDeepLink = FOpenfortOpenfortSDKHandleDeepLinkDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnDeepLinkActivated);
+
+				Msg = Response.JsonObject->GetStringField(TEXT("result")).Replace(TEXT(" "), TEXT("+"));
+#if PLATFORM_ANDROID
+				OnDismissed = FOpenfortOpenfortSDKOnDismissedDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::HandleOnLoginDismissed);
+				LaunchAndroidUrl(Msg);
+#elif PLATFORM_IOS
+				[[OpenfortIOS instance] launchUrl:TCHAR_TO_ANSI(*Msg)];
+#elif PLATFORM_MAC
+				[[OpenfortMac instance] launchUrl:TCHAR_TO_ANSI(*Msg)
+								   forRedirectUri:TCHAR_TO_ANSI(*Msg)];
+#endif
+			}
+		}
+		else
+		{
+			OPENFORT_ERR("Unable to return a response for Connect PKCE.");
+		}
+#else
+		if (!Response.success || !InitOAuthFlowData || !InitOAuthFlowData->key.Len())
+		{
+			FString Msg;
+
+			OPENFORT_WARN("Login device flow initialization attempt failed.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+
 			return;
 		}
+		FString Err;
 
-		FString AuthUrl, AuthKey;
-		if (!Response.JsonObject->TryGetStringField(TEXT("url"), AuthUrl) || !Response.JsonObject->TryGetStringField(TEXT("key"), AuthKey))
+		FPlatformProcess::LaunchURL(*InitDeviceFlowData->url, nullptr, &Err);
+		if (Err.Len())
 		{
-			OPENFORT_ERR("Invalid OAuth init response");
-			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, TEXT("Invalid OAuth init response"), Response});
+			FString Msg = "Failed to connect to Browser: " + Err;
+
+			OPENFORT_ERR("%s", *Msg);
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
 			return;
 		}
-
-		LaunchAuthUrl(AuthUrl);
-		PoolOAuth(AuthKey);
+		FPoolOAuthRequest Data{InitOAuthFlowData->key} PoolOAuth(UStructToJsonString(Data));
+#endif
 	}
+}
+
+void UOpenfortOpenfortSDK::OnInitOAuthResponse(FOpenfortJSResponse Response)
+{
+	// Implementation for OnInitOAuthResponse
 }
 
 void UOpenfortOpenfortSDK::OnUnlinkOAuthResponse(FOpenfortJSResponse Response)
@@ -353,7 +437,6 @@ void UOpenfortOpenfortSDK::OnLogoutResponse(FOpenfortJSResponse Response)
 	ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{true, Message});
 
 	return;
-
 }
 
 void UOpenfortOpenfortSDK::OnGetAccessTokenResponse(FOpenfortJSResponse Response)
@@ -401,87 +484,140 @@ void UOpenfortOpenfortSDK::OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse
 	// Implementation for OnConfigureEmbeddedSignerResponse
 }
 
-void UOpenfortOpenfortSDK::BeginDestroy
-
-	void
-	UOpenfortOpenfortSDK::LaunchAuthUrl(const FString &Url)
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+void UOpenfortOpenfortSDK::OnDeepLinkActivated(FString DeepLink)
 {
-#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_MAC
-	// Register for deep link handling
-	DeepLinkHandle = FPlatformMisc::OnDeepLinkActivated().AddUObject(this, &UOpenfortOpenfortSDK::HandleDeepLink);
+	OPENFORT_LOG_FUNC("URL : %s", *DeepLink);
+	OnHandleDeepLink = nullptr;
+
+	CompleteAuthenticationFlow(DeepLink);
+}
+
+void UOpenfortOpenfortSDK::CompleteAuthenticationFlow(FString Url)
+{
+	// Required mainly for Android to detect when Chrome Custom tabs is dismissed
+
+	// Get AccessToken and RefreshToken from deeplink URL
+	TOptional<FString> AccessToken, RefreshToken;
+	FString Endpoint, Params;
+	Url.Split(TEXT("?"), &Endpoint, &Params);
+	TArray<FString> ParamsArray;
+
+	Params.ParseIntoArray(ParamsArray, TEXT("&"));
+	for (FString Param : ParamsArray)
+	{
+		FString Key, Value;
+
+		if (Param.StartsWith("access_token"))
+		{
+			Param.Split(TEXT("="), &Key, &Value);
+			AccessToken = Value;
+		}
+		else if (Param.StartsWith("refresh_token"))
+		{
+			Param.Split(TEXT("="), &Key, &Value);
+			RefreshToken = Value;
+		}
+	}
+
+	if (!AccessToken.IsSet() || !RefreshToken.IsSet())
+	{
+		const FString ErrorMsg = "Uri was missing RefreshToken and/or AccessToken. Please call AuthenticateWithOAuth() again";
+
+		OPENFORT_ERR("%s", *ErrorMsg);
+		DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{false, ErrorMsg});
+		DeepResponseDelegate = nullptr;
+	}
+	else
+	{
+		FOpenfortOpenfortSDKStoreCredentialsData Data = FOpenfortOpenfortSDKStoreCredentialsData{AccessToken.GetValue(), RefreshToken.GetValue()};
+
+		CallJS(OpenfortOpenfortSDKAction::STORE_CREDENTIALS, UStructToJsonString(Data), DeepResponseDelegate,
+			   FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnStoreCredentialsResponse));
+	}
+}
 #endif
 
-	FPlatformProcess::LaunchURL(*Url, nullptr, nullptr);
-}
-
-void UOpenfortOpenfortSDK::PoolOAuth(const FString &Key)
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+#if PLATFORM_ANDROID
+// Called from Android JNI
+void UOpenfortOpenfortSDK::HandleDeepLink(FString DeepLink) const
 {
-	GetWorld()->GetTimerManager().SetTimer(PoolingTimerHandle, [this, Key]()
-										   {
-        FPoolOAuthRequest PoolRequest;
-        PoolRequest.Key = Key;
-
-        CallJS(OpenfortOpenfortSDKAction::POOL_OAUTH, UStructToJsonString(PoolRequest), MainResponseDelegate, 
-            FOpenfortJSResponseDelegate::CreateLambda([this](FOpenfortJSResponse Response)
-            {
-                if (Response.success)
-                {
-                    bIsLoggedIn = true;
-                    GetWorld()->GetTimerManager().ClearTimer(PoolingTimerHandle);
-                    MainResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{true, TEXT("Authentication successful"), Response});
-                }
-                else
-                {
-                    FString ErrorMsg = Response.Error.IsSet() ? Response.Error->ToString() : TEXT("Authentication failed");
-                    OPENFORT_ERR("%s", *ErrorMsg);
-                    // Don't clear the timer here, allow it to continue polling
-                }
-            })); }, 2.0f, true); // Poll every 2 seconds
-}
-
-void UOpenfortOpenfortSDK::HandleDeepLink(const FString &DeepLink)
+#elif PLATFORM_IOS | PLATFORM_MAC
+// Called from iOS Objective C
+void UOpenfortOpenfortSDK::HandleDeepLink(NSString *sDeepLink) const
 {
-	if (DeepLink.StartsWith(RedirectUri))
+	FString DeepLink = FString(UTF8_TO_TCHAR([sDeepLink UTF8String]));
+	OPENFORT_LOG("Handle Deep Link: %s", *DeepLink);
+#endif
+
+	if (!OnHandleDeepLink.ExecuteIfBound(DeepLink))
 	{
-		CompleteAuthenticationFlow(DeepLink);
+		OPENFORT_WARN("OnHandleDeepLink delegate was not called");
+	}
+}
+#endif
 
-		// Unregister deep link handler
-		FPlatformMisc::OnDeepLinkActivated().Remove(DeepLinkHandle);
+#if PLATFORM_ANDROID
+void UOpenfortOpenfortSDK::HandleOnLoginDismissed()
+{
+	OPENFORT_LOG("Handle On Login Dismissed");
+	OnDismissed = nullptr;
+
+	// If the second part of (CompleteAuthenticationFlow) has not started yet and custom tabs is dismissed,
+	// this means the user manually dismissed the custom tabs before entering all
+	// all required details (e.g. email address) into Passport
+	if (!false)
+	{
+		// User hasn't entered all required details (e.g. email address) into
+		// Passport yet
+		OPENFORT_LOG("Login dismissed before completing the flow");
+		if (FTaskGraphInterface::IsRunning())
+		{
+			FGraphEventRef GameThreadTask = FFunctionGraphTask::CreateAndDispatchWhenReady([this]()
+																						   {
+					if (!DeepResponseDelegate.ExecuteIfBound(FOpenfortPassportResult{ false, "Cancelled" }))
+					{
+						OPENFORT_WARN("Login ResponseDelegate delegate was not called");
+					}
+					DeepResponseDelegate = nullptr; }, TStatId(), nullptr, ENamedThreads::GameThread);
+		}
+	}
+	else
+	{
+		OPENFORT_LOG("Login dismissed by user or SDK");
 	}
 }
 
-void UOpenfortOpenfortSDK::CompleteAuthenticationFlow(const FString &Uri)
+void UOpenfortOpenfortSDK::HandleCustomTabsDismissed(FString Url)
 {
-	FString AccessToken, RefreshToken;
-	TMap<FString, FString> Params;
-	FGenericPlatformHttp::ParseURL(*Uri, RedirectUri, Params);
+	OPENFORT_LOG("On Login Dismissed");
 
-	if (!Params.Contains(TEXT("access_token")) || !Params.Contains(TEXT("refresh_token")))
+	if (!OnDismissed.ExecuteIfBound())
 	{
-		OPENFORT_ERR("Invalid authentication response");
-		MainResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{false, TEXT("Invalid authentication response")});
-		return;
+		OPENFORT_WARN("OnDismissed delegate was not called");
 	}
-
-	AccessToken = Params[TEXT("access_token")];
-	RefreshToken = Params[TEXT("refresh_token")];
-
-	FAuthCredentialsRequest CredentialsRequest;
-	CredentialsRequest.AccessToken = AccessToken;
-	CredentialsRequest.RefreshToken = RefreshToken;
-
-	CallJS(OpenfortOpenfortSDKAction::STORE_CREDENTIALS, UStructToJsonString(CredentialsRequest), MainResponseDelegate,
-		   FOpenfortJSResponseDelegate::CreateLambda([this](FOpenfortJSResponse Response)
-													 {
-            if (Response.success)
-            {
-                bIsLoggedIn = true;
-                MainResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{true, TEXT("Authentication successful"), Response});
-            }
-            else
-            {
-                FString ErrorMsg = Response.Error.IsSet() ? Response.Error->ToString() : TEXT("Failed to store credentials");
-                OPENFORT_ERR("%s", *ErrorMsg);
-                MainResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{false, ErrorMsg, Response});
-            } }));
 }
+
+void UOpenfortOpenfortSDK::CallJniStaticVoidMethod(JNIEnv *Env, const jclass Class, jmethodID Method, ...)
+{
+	va_list Args;
+
+	va_start(Args, Method);
+	Env->CallStaticVoidMethodV(Class, Method, Args);
+	va_end(Args);
+	Env->DeleteLocalRef(Class);
+}
+
+void UOpenfortOpenfortSDK::LaunchAndroidUrl(FString Url)
+{
+	if (JNIEnv *Env = FAndroidApplication::GetJavaEnv())
+	{
+		jstring jurl = Env->NewStringUTF(TCHAR_TO_UTF8(*Url));
+		jclass jopenfortAndroidClass = FAndroidApplication::FindJavaClass("com/openfort/unreal/OpenfortActivity");
+		static jmethodID jlaunchUrl = FJavaWrapper::FindStaticMethod(Env, jopenfortAndroidClass, "startActivity", "(Landroid/app/Activity;Ljava/lang/String;)V", false);
+
+		CallJniStaticVoidMethod(Env, jopenfortAndroidClass, jlaunchUrl, FJavaWrapper::GameActivityThis, jurl);
+	}
+}
+#endif

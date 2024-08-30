@@ -39,6 +39,30 @@ struct FOpenfortEngineVersionData
 };
 
 USTRUCT()
+struct FOpenfortOpenfortSDKStoreCredentialsData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString access_token;
+
+	UPROPERTY()
+	FString refresh_token;
+};
+
+USTRUCT()
+struct FOpenfortOpenfortSDKInitOAuthData
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString url;
+
+	UPROPERTY()
+	FString key;
+};
+
+USTRUCT()
 struct OPENFORT_API FOpenfortOpenfortSDKInitData
 {
 	GENERATED_BODY()

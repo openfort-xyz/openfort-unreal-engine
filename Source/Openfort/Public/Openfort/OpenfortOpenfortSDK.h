@@ -99,52 +99,75 @@ protected:
 	void Setup(TWeakObjectPtr<class UOpenfortJSConnector> Connector);
 	void ReinstateConnection(FOpenfortJSResponse Response);
 
+#if PLATFORM_ANDROID
+	DECLARE_DELEGATE(FOpenfortOpenfortSDKOnDismissedDelegate);
+
+	FOpenfortOpenfortSDKOnDismissedDelegate OnDismissed;
+#endif
+
 	TWeakObjectPtr<UOpenfortJSConnector> JSConnector;
 	FDelegateHandle BridgeReadyHandle;
 	TMap<FString, FOpenfortOpenfortSDKResponseDelegate> ResponseDelegates;
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+	DECLARE_DELEGATE_OneParam(FOpenfortOpenfortSDKHandleDeepLinkDelegate, FString);
 
+	FOpenfortOpenfortSDKHandleDeepLinkDelegate OnHandleDeepLink;
+	FOpenfortOpenfortSDKResponseDelegate DeepResponseDelegate;
+#endif
+
+	// Ensures that OpenfortSDK has been initialized before calling JS
 	bool CheckIsInitialized(const FString &Action, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate) const;
+	// Calls JS with the given Action and Data, and registers the given
+	// ResponseDelegate to be called when JS responds
 	void CallJS(const FString &Action, const FString &Data, const FOpenfortOpenfortSDKResponseDelegate &ClientResponseDelegate, const FOpenfortJSResponseDelegate &HandleJSResponse, const bool bCheckInitialized = true);
+	// Pulls the ResponseDelegate from the ResponseDelegates map and returns it
 	TOptional<FOpenfortOpenfortSDKResponseDelegate> GetResponseDelegate(const FOpenfortJSResponse &Response);
-    void OnInitializeResponse(FOpenfortJSResponse Response);
-    void OnLoginResponse(FOpenfortJSResponse Response);
-    void OnSignupResponse(FOpenfortJSResponse Response);
-    void OnLinkEmailPasswordResponse(FOpenfortJSResponse Response);
-    void OnUnlinkEmailPasswordResponse(FOpenfortJSResponse Response);
-    void OnRequestResetPasswordResponse(FOpenfortJSResponse Response);
-    void OnResetPasswordResponse(FOpenfortJSResponse Response);
-    void OnRequestEmailVerificationResponse(FOpenfortJSResponse Response);
-    void OnVerifyEmailResponse(FOpenfortJSResponse Response);
-    void OnUnlinkOAuthResponse(FOpenfortJSResponse Response);
-    void OnPoolOAuthResponse(FOpenfortJSResponse Response);
-    void OnInitLinkOAuthResponse(FOpenfortJSResponse Response);
-    void OnAuthenticateWithThirdPartyProviderResponse(FOpenfortJSResponse Response);
-    void OnInitSiweResponse(FOpenfortJSResponse Response);
-    void OnAuthenticateWithSiweResponse(FOpenfortJSResponse Response);
-    void OnLinkWalletResponse(FOpenfortJSResponse Response);
-    void OnUnlinkWalletResponse(FOpenfortJSResponse Response);
-    void OnStoreCredentialsResponse(FOpenfortJSResponse Response);
-    void OnGetUserResponse(FOpenfortJSResponse Response);
-    void OnLogoutResponse(FOpenfortJSResponse Response);
-    void OnGetAccessTokenResponse(FOpenfortJSResponse Response);
-    void OnValidateAndRefreshTokenResponse(FOpenfortJSResponse Response);
-    void OnSendSignatureTransactionIntentRequestResponse(FOpenfortJSResponse Response);
-    void OnSignMessageResponse(FOpenfortJSResponse Response);
-    void OnSignTypedDataResponse(FOpenfortJSResponse Response);
-    void OnSendSignatureSessionRequestResponse(FOpenfortJSResponse Response);
-    void OnGetEmbeddedStateResponse(FOpenfortJSResponse Response);
-    void OnGetEthereumProviderResponse(FOpenfortJSResponse Response);
-    void OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response);
-private:
+	void OnInitializeResponse(FOpenfortJSResponse Response);
+	void OnLoginResponse(FOpenfortJSResponse Response);
+	void OnSignupResponse(FOpenfortJSResponse Response);
+	void OnLinkEmailPasswordResponse(FOpenfortJSResponse Response);
+	void OnUnlinkEmailPasswordResponse(FOpenfortJSResponse Response);
+	void OnRequestResetPasswordResponse(FOpenfortJSResponse Response);
+	void OnResetPasswordResponse(FOpenfortJSResponse Response);
+	void OnRequestEmailVerificationResponse(FOpenfortJSResponse Response);
+	void OnVerifyEmailResponse(FOpenfortJSResponse Response);
+	void OnUnlinkOAuthResponse(FOpenfortJSResponse Response);
+	void OnPoolOAuthResponse(FOpenfortJSResponse Response);
+	void OnInitLinkOAuthResponse(FOpenfortJSResponse Response);
+	void OnAuthenticateWithThirdPartyProviderResponse(FOpenfortJSResponse Response);
+	void OnInitSiweResponse(FOpenfortJSResponse Response);
+	void OnAuthenticateWithSiweResponse(FOpenfortJSResponse Response);
+	void OnLinkWalletResponse(FOpenfortJSResponse Response);
+	void OnUnlinkWalletResponse(FOpenfortJSResponse Response);
+	void OnStoreCredentialsResponse(FOpenfortJSResponse Response);
+	void OnGetUserResponse(FOpenfortJSResponse Response);
+	void OnLogoutResponse(FOpenfortJSResponse Response);
+	void OnGetAccessTokenResponse(FOpenfortJSResponse Response);
+	void OnValidateAndRefreshTokenResponse(FOpenfortJSResponse Response);
+	void OnSendSignatureTransactionIntentRequestResponse(FOpenfortJSResponse Response);
+	void OnSignMessageResponse(FOpenfortJSResponse Response);
+	void OnSignTypedDataResponse(FOpenfortJSResponse Response);
+	void OnSendSignatureSessionRequestResponse(FOpenfortJSResponse Response);
+	void OnGetEmbeddedStateResponse(FOpenfortJSResponse Response);
+	void OnGetEthereumProviderResponse(FOpenfortJSResponse Response);
+	void OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response);
+	void OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response);
 	void OnInitOAuthResponse(FOpenfortJSResponse Response);
-	void LaunchAuthUrl(const FString &Url);
-	void PoolOAuth(const FString &Key);
-	void CompleteAuthenticationFlow(const FString &Uri);
 
+#if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
+	void OnDeepLinkActivated(FString DeepLink);
+	void CompleteAuthenticationFlow(FString Url);
+#endif
+#if PLATFORM_ANDROID
+	void HandleOnLoginDismissed();
+	void CallJniStaticVoidMethod(JNIEnv *Env, const jclass Class, jmethodID Method, ...);
+	void LaunchAndroidUrl(FString Url);
+#endif
+private:
 	FString RedirectUri;
 	FDelegateHandle DeepLinkHandle;
 	FTimerHandle PoolingTimerHandle;
-   	bool bIsInitialized;
-    bool bIsLoggedIn;
-    FOpenfortOpenfortSDKResponseDelegate MainResponseDelegate;
+	bool bIsInitialized;
+	bool bIsLoggedIn;
+	FOpenfortOpenfortSDKResponseDelegate MainResponseDelegate;
 };
