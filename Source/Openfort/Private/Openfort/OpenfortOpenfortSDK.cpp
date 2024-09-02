@@ -445,11 +445,15 @@ void UOpenfortOpenfortSDK::OnGetUserResponse(FOpenfortJSResponse Response)
 		FString Msg;
 		bool bSuccess = true;
 
-		if (!Response.success)
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("id")))
 		{
-			OPENFORT_WARN("Could not fetch user fmor Openfort.");
+			OPENFORT_WARN("Could not fetch user from Openfort.");
 			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
 			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("id"));
 		}
 		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
 	}
@@ -486,7 +490,26 @@ void UOpenfortOpenfortSDK::OnLogoutResponse(FOpenfortJSResponse Response)
 
 void UOpenfortOpenfortSDK::OnGetAccessTokenResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnGetAccessTokenResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString AccessToken;
+
+		Response.JsonObject->TryGetStringField(TEXT("result"), AccessToken);
+
+		if (!Response.success || AccessToken.IsEmpty())
+		{
+			OPENFORT_LOG("Failed to retrieve Access Token");
+
+			const FString Msg = Response.JsonObject->HasField(TEXT("error")) ? Response.JsonObject->GetStringField(TEXT("error")) : "Failed to retrieve Access Token.";
+
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+		}
+		else
+		{
+			OPENFORT_LOG("Retrieved Access Token.");
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{true, AccessToken});
+		}
+	}
 }
 
 void UOpenfortOpenfortSDK::OnValidateAndRefreshTokenResponse(FOpenfortJSResponse Response)
