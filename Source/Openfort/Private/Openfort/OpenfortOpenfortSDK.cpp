@@ -539,7 +539,23 @@ void UOpenfortOpenfortSDK::OnSendSignatureSessionRequestResponse(FOpenfortJSResp
 
 void UOpenfortOpenfortSDK::OnGetEmbeddedStateResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnGetEmbeddedStateResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("result")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("result"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnGetEthereumProviderResponse(FOpenfortJSResponse Response)
@@ -549,7 +565,19 @@ void UOpenfortOpenfortSDK::OnGetEthereumProviderResponse(FOpenfortJSResponse Res
 
 void UOpenfortOpenfortSDK::OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnConfigureEmbeddedSignerResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success)
+		{
+			OPENFORT_WARN("Could not configure embedded signer.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 #if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC

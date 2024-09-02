@@ -61,47 +61,6 @@ struct OPENFORT_API FAuthenticateWithSiweRequest
 		: Signature(InSignature), Message(InMessage), WalletClientType(InWalletClientType), ConnectorType(InConnectorType) {}
 };
 
-UENUM(BlueprintType)
-enum class EShieldAuthType : uint8
-{
-	Openfort UMETA(DisplayName = "Openfort"),
-	Custom UMETA(DisplayName = "Custom")
-};
-
-USTRUCT(BlueprintType)
-struct OPENFORT_API FShieldAuthentication
-{
-	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	EShieldAuthType Auth;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString Token;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString AuthProvider;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString TokenType;
-
-	FShieldAuthentication() : Auth(EShieldAuthType::Openfort) {}
-	FShieldAuthentication(EShieldAuthType InAuth, const FString &InToken, const FString &InAuthProvider = TEXT(""), const FString &InTokenType = TEXT(""))
-		: Auth(InAuth), Token(InToken), AuthProvider(InAuthProvider), TokenType(InTokenType) {}
-};
-
-USTRUCT(BlueprintType)
-struct OPENFORT_API FEmbeddedSignerRequest
-{
-	GENERATED_BODY()
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	int32 ChainId;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FShieldAuthentication ShieldAuthentication;
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
-	FString RecoveryPassword;
-
-	FEmbeddedSignerRequest() : ChainId(0) {}
-	FEmbeddedSignerRequest(int32 InChainId, const FShieldAuthentication &InShieldAuthentication, const FString &InRecoveryPassword = TEXT(""))
-		: ChainId(InChainId), ShieldAuthentication(InShieldAuthentication), RecoveryPassword(InRecoveryPassword) {}
-};
-
 USTRUCT(BlueprintType)
 struct OPENFORT_API FEthereumProviderOptions
 {
@@ -699,3 +658,58 @@ enum class EOpenfortAuthEvent : uint8
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAuthEventDelegate, EOpenfortAuthEvent, AuthEvent);
+
+UENUM(BlueprintType)
+enum class EShieldAuthType : uint8
+{
+	openfort UMETA(DisplayName = "openfort"),
+	custom UMETA(DisplayName = "custom")
+};
+
+USTRUCT(BlueprintType)
+struct OPENFORT_API FShieldAuthentication
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	EShieldAuthType Auth;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	FString Token;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	FString AuthProvider;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	FString TokenType;
+
+	FShieldAuthentication() {}
+
+	FShieldAuthentication(EShieldAuthType InAuth, const FString &InToken, const FString &InAuthProvider = TEXT(""), const FString &InTokenType = TEXT(""))
+		: Auth(InAuth), Token(InToken), AuthProvider(InAuthProvider), TokenType(InTokenType) {}
+};
+
+USTRUCT(BlueprintType)
+struct OPENFORT_API FEmbeddedSignerRequest
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	int32 ChainId;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	FShieldAuthentication ShieldAuthentication;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
+	FString RecoveryPassword;
+
+	FEmbeddedSignerRequest() {}
+
+	FEmbeddedSignerRequest(int32 InChainId, const FShieldAuthentication &InShieldAuthentication, const FString &InRecoveryPassword = TEXT(""))
+		: ChainId(InChainId), ShieldAuthentication(InShieldAuthentication), RecoveryPassword(InRecoveryPassword) {}
+
+	static FEmbeddedSignerRequest Create(int32 InChainId, const FShieldAuthentication &InShieldAuthentication, const FString &InRecoveryPassword = TEXT(""))
+	{
+		return FEmbeddedSignerRequest(InChainId, InShieldAuthentication, InRecoveryPassword);
+	}
+};
