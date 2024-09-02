@@ -150,7 +150,7 @@ protected:
 	void OnSendSignatureSessionRequestResponse(FOpenfortJSResponse Response);
 	void OnGetEmbeddedStateResponse(FOpenfortJSResponse Response);
 	void OnGetEthereumProviderResponse(FOpenfortJSResponse Response);
-	void OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response);
+	void OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response, const FString &RedirectTo);
 	void OnConfigureEmbeddedSignerResponse(FOpenfortJSResponse Response);
 	void OnInitOAuthResponse(FOpenfortJSResponse Response);
 

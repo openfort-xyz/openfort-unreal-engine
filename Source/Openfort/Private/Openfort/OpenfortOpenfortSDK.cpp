@@ -78,12 +78,15 @@ void UOpenfortOpenfortSDK::VerifyEmail(const FVerifyEmailRequest &Request, const
 
 void UOpenfortOpenfortSDK::AuthenticateWithOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate)
 {
-
 #if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
 	DeepResponseDelegate = ResponseDelegate;
-	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), DeepResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse));
+	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), DeepResponseDelegate,
+		   FOpenfortJSResponseDelegate::CreateLambda([this, RedirectTo = Request.Options.RedirectTo](FOpenfortJSResponse Response)
+													 { OnAuthenticateWithOAuthResponse(Response, RedirectTo); }));
 #else
-	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse));
+	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), ResponseDelegate,
+		   FOpenfortJSResponseDelegate::CreateLambda([this, RedirectTo = Request.Options.RedirectTo](FOpenfortJSResponse Response)
+													 { OnAuthenticateWithOAuthResponse(Response, RedirectTo); }));
 #endif
 }
 
@@ -295,7 +298,7 @@ void UOpenfortOpenfortSDK::OnVerifyEmailResponse(FOpenfortJSResponse Response)
 	// Implementation for OnVerifyEmailResponse
 }
 
-void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response)
+void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response, const FString &RedirectTo)
 {
 	if (auto ResponseDelegate = GetResponseDelegate(Response))
 	{
@@ -306,9 +309,9 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 			FString Msg;
 			bool bSuccess = true;
 
-			if (!Response.success || !Response.JsonObject->HasField(TEXT("result")))
+			if (!Response.success || !Response.JsonObject->HasField(TEXT("url")))
 			{
-				OPENFORT_LOG("Could not get PKCE auth URL from OpenfortSDK.");
+				OPENFORT_LOG("Could not get auth URL from OpenfortSDK.");
 				bSuccess = false;
 			}
 			else
@@ -316,7 +319,7 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 				// Handle deeplink calls
 				OnHandleDeepLink = FOpenfortOpenfortSDKHandleDeepLinkDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnDeepLinkActivated);
 
-				Msg = Response.JsonObject->GetStringField(TEXT("result")).Replace(TEXT(" "), TEXT("+"));
+				Msg = Response.JsonObject->GetStringField(TEXT("url")).Replace(TEXT(" "), TEXT("+"));
 #if PLATFORM_ANDROID
 				OnDismissed = FOpenfortOpenfortSDKOnDismissedDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::HandleOnLoginDismissed);
 				LaunchAndroidUrl(Msg);
@@ -324,14 +327,14 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 				[[OpenfortIOS instance] launchUrl:TCHAR_TO_ANSI(*Msg)];
 #elif PLATFORM_MAC
 				[[OpenfortMac instance] launchUrl:TCHAR_TO_ANSI(*Msg)
-								   forRedirectUri:TCHAR_TO_ANSI(*Msg)];
+								   forRedirectUri:TCHAR_TO_ANSI(*RedirectTo)];
 #endif
 			}
 			DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
 		}
 		else
 		{
-			OPENFORT_ERR("Unable to return a response for Connect PKCE.");
+			OPENFORT_ERR("Unable to return a response for Authenticate.");
 		}
 #else
 		if (!Response.success || !InitOAuthFlowData || InitOAuthFlowData->key.IsEmpty())
@@ -420,12 +423,36 @@ void UOpenfortOpenfortSDK::OnUnlinkWalletResponse(FOpenfortJSResponse Response)
 
 void UOpenfortOpenfortSDK::OnStoreCredentialsResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnStoreCredentialsResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success)
+		{
+			OPENFORT_WARN("Could not store credentials.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnGetUserResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnGetUserResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success)
+		{
+			OPENFORT_WARN("Could not fetch user fmor Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnLogoutResponse(FOpenfortJSResponse Response)
@@ -516,7 +543,7 @@ void UOpenfortOpenfortSDK::CompleteAuthenticationFlow(FString Url)
 	// Required mainly for Android to detect when Chrome Custom tabs is dismissed
 
 	// Get AccessToken and RefreshToken from deeplink URL
-	TOptional<FString> AccessToken, RefreshToken;
+	TOptional<FString> AccessToken, RefreshToken, PlayerID;
 	FString Endpoint, Params;
 	Url.Split(TEXT("?"), &Endpoint, &Params);
 	TArray<FString> ParamsArray;
@@ -536,11 +563,16 @@ void UOpenfortOpenfortSDK::CompleteAuthenticationFlow(FString Url)
 			Param.Split(TEXT("="), &Key, &Value);
 			RefreshToken = Value;
 		}
+		else if (Param.StartsWith("player_id"))
+		{
+			Param.Split(TEXT("="), &Key, &Value);
+			PlayerID = Value;
+		}
 	}
 
-	if (!AccessToken.IsSet() || !RefreshToken.IsSet())
+	if (!AccessToken.IsSet() || !RefreshToken.IsSet() || !PlayerID.IsSet())
 	{
-		const FString ErrorMsg = "Uri was missing RefreshToken and/or AccessToken. Please call AuthenticateWithOAuth() again";
+		const FString ErrorMsg = "Uri was missing RefreshToken and/or AccessToken and/or PlayerID. Please call AuthenticateWithOAuth() again";
 
 		OPENFORT_ERR("%s", *ErrorMsg);
 		DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{false, ErrorMsg});
@@ -548,7 +580,7 @@ void UOpenfortOpenfortSDK::CompleteAuthenticationFlow(FString Url)
 	}
 	else
 	{
-		FOpenfortOpenfortSDKStoreCredentialsData Data = FOpenfortOpenfortSDKStoreCredentialsData{AccessToken.GetValue(), RefreshToken.GetValue()};
+		FOpenfortOpenfortSDKStoreCredentialsData Data = FOpenfortOpenfortSDKStoreCredentialsData{AccessToken.GetValue(), RefreshToken.GetValue(), PlayerID.GetValue()};
 
 		CallJS(OpenfortOpenfortSDKAction::STORE_CREDENTIALS, UStructToJsonString(Data), DeepResponseDelegate,
 			   FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnStoreCredentialsResponse));

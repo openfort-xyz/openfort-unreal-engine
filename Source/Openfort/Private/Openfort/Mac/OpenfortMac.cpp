@@ -90,22 +90,22 @@ ASWebAuthenticationSession *_authSession;
         [[ASWebAuthenticationSession alloc]
                   initWithURL:URL
             callbackURLScheme:callbackURLScheme
-            completionHandler:^(NSURL *_Nullable callbackURL,
+            completionHandler:^(NSURL *_Nullable redirect_uri,
                                 NSError *_Nullable error) {
               _authSession = nil;
 
-              if (callbackURL)
+              if (redirect_uri)
               {
                 UOpenfortOpenfortSDK *openfortSDK = [OpenfortMac getOpenfortSDK];
 
                 if (openfortSDK)
                 {
-                  openfortSDK->HandleDeepLink(callbackURL.absoluteString);
+                  openfortSDK->HandleDeepLink(redirect_uri.absoluteString);
                 }
               }
               else
               {
-                OPENFORT_ERR("callbackURL is empty");
+                OPENFORT_ERR("redirect_uri is empty");
                 return;
               }
             }];

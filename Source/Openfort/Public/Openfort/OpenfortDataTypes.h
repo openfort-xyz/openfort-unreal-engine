@@ -44,10 +44,13 @@ struct FOpenfortOpenfortSDKStoreCredentialsData
 	GENERATED_BODY()
 
 	UPROPERTY()
-	FString access_token;
+	FString accessToken;
 
 	UPROPERTY()
-	FString refresh_token;
+	FString refreshToken;
+
+	UPROPERTY()
+	FString player;
 };
 
 USTRUCT()
