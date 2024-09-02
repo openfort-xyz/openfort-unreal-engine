@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "OpenfortBlueprintAsyncAction.h"
-#include "OpenfortAuthenticateAsyncAction.generated.h"
+#include "OpenfortOpenfortSDKAuthenticateAsyncAction.generated.h"
 
 UCLASS()
-class OPENFORT_API UOpenfortConnectionAsyncActions : public UOpenfortBlueprintAsyncAction
+class OPENFORT_API UOpenfortOpenfortSDKAuthenticateAsyncActions : public UOpenfortBlueprintAsyncAction
 {
 	GENERATED_BODY()
 
@@ -16,14 +16,17 @@ class OPENFORT_API UOpenfortConnectionAsyncActions : public UOpenfortBlueprintAs
 
 public:
 	/**
-	 * Authenticate with OpenfortSDK using PKCE flow.
+	 * Authenticate with OpenfortSDK.
 	 *
 	 * @param    WorldContextObject    World context
+	 * @param    Provider               The OAuth provider to use for authentication
+	 * @param    Options                Additional options for the OAuth request
+	 * @param    bUsePooling            Whether to use pooling for the OAuth request
 	 *
 	 * @return    A reference to the object represented by this node
 	 */
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortConnectionAsyncActions *AuthenticateWithOAuth(UObject *WorldContextObject);
+	static UOpenfortOpenfortSDKAuthenticateAsyncActions *AuthenticateWithOAuth(UObject *WorldContextObject, EOAuthProvider Provider, const FOAuthInitRequestOptions &Options, bool bUsePooling);
 
 	virtual void Activate() override;
 
@@ -41,4 +44,8 @@ private:
 
 	UPROPERTY()
 	UObject *WorldContextObject;
+
+	EOAuthProvider Provider;
+	FOAuthInitRequestOptions Options;
+	bool bUsePooling;
 };

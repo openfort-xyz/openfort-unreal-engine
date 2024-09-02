@@ -47,7 +47,7 @@ class OPENFORT_API UOpenfortOpenfortSDK : public UObject
 	friend class UOpenfortSubsystem;
 
 public:
-	DECLARE_MULTICAST_DELEGATE(FOnIdentityReadyDelegate);
+	DECLARE_MULTICAST_DELEGATE(FOnOpenfortSDKReadyDelegate);
 
 	DECLARE_DELEGATE_OneParam(FOpenfortOpenfortSDKResponseDelegate, FOpenfortOpenfortSDKResult);
 
