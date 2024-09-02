@@ -48,8 +48,7 @@ void UOpenfortOpenfortSDKAuthenticateAsyncActions::DoAuthenticate(TWeakObjectPtr
 	if (OpenfortSDK.IsValid())
 	{
 		FOAuthInitRequest Request(Provider, Options, bUsePooling);
-		OpenfortSDK->InitOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKAuthenticateAsyncActions::OnAuthenticate));
-		// OpenfortSDK->AuthenticateWithOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKAuthenticateAsyncActions::OnAuthenticate));
+		OpenfortSDK->AuthenticateWithOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKAuthenticateAsyncActions::OnAuthenticate));
 	}
 	else
 	{

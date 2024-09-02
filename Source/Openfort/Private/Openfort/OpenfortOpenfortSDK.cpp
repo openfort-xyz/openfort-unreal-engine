@@ -297,65 +297,68 @@ void UOpenfortOpenfortSDK::OnVerifyEmailResponse(FOpenfortJSResponse Response)
 
 void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response)
 {
-	// 	if (auto ResponseDelegate = GetResponseDelegate(Response))
-	// 	{
-	// 		const auto InitOAuthFlowData = JsonObjectToUStruct<FOpenfortOpenfortSDKInitOAuthData>(Response.JsonObject);
-	// #if PLATFORM_ANDROID | PLATFORM_IOS | PLATFORM_MAC
-	// 		if (DeepResponseDelegate.IsBound())
-	// 		{
-	// 			FString Msg;
-	// 			bool bSuccess = true;
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		const auto InitOAuthFlowData = JsonObjectToUStruct<FOpenfortOpenfortSDKInitOAuthData>(Response.JsonObject);
+#if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_MAC
+		if (DeepResponseDelegate.IsBound())
+		{
+			FString Msg;
+			bool bSuccess = true;
 
-	// 			if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("result")))
-	// 			{
-	// 				OPENFORT_LOG("Could not get PKCE auth URL from OpenfortSDK.");
-	// 			}
-	// 			else
-	// 			{
-	// 				// Handle deeplink calls
-	// 				OnHandleDeepLink = FOpenfortOpenfortSDKHandleDeepLinkDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnDeepLinkActivated);
+			if (!Response.success || !Response.JsonObject->HasField(TEXT("result")))
+			{
+				OPENFORT_LOG("Could not get PKCE auth URL from OpenfortSDK.");
+				bSuccess = false;
+			}
+			else
+			{
+				// Handle deeplink calls
+				OnHandleDeepLink = FOpenfortOpenfortSDKHandleDeepLinkDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnDeepLinkActivated);
 
-	// 				Msg = Response.JsonObject->GetStringField(TEXT("result")).Replace(TEXT(" "), TEXT("+"));
-	// #if PLATFORM_ANDROID
-	// 				OnDismissed = FOpenfortOpenfortSDKOnDismissedDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::HandleOnLoginDismissed);
-	// 				LaunchAndroidUrl(Msg);
-	// #elif PLATFORM_IOS
-	// 				[[OpenfortIOS instance] launchUrl:TCHAR_TO_ANSI(*Msg)];
-	// #elif PLATFORM_MAC
-	// 				[[OpenfortMac instance] launchUrl:TCHAR_TO_ANSI(*Msg)
-	// 								   forRedirectUri:TCHAR_TO_ANSI(*Msg)];
-	// #endif
-	// 			}
-	// 		}
-	// 		else
-	// 		{
-	// 			OPENFORT_ERR("Unable to return a response for Connect PKCE.");
-	// 		}
-	// #else
-	// 		if (!Response.success || !InitOAuthFlowData || !InitOAuthFlowData->key.Len())
-	// 		{
-	// 			FString Msg;
+				Msg = Response.JsonObject->GetStringField(TEXT("result")).Replace(TEXT(" "), TEXT("+"));
+#if PLATFORM_ANDROID
+				OnDismissed = FOpenfortOpenfortSDKOnDismissedDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::HandleOnLoginDismissed);
+				LaunchAndroidUrl(Msg);
+#elif PLATFORM_IOS
+				[[OpenfortIOS instance] launchUrl:TCHAR_TO_ANSI(*Msg)];
+#elif PLATFORM_MAC
+				[[OpenfortMac instance] launchUrl:TCHAR_TO_ANSI(*Msg)
+								   forRedirectUri:TCHAR_TO_ANSI(*Msg)];
+#endif
+			}
+			DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+		}
+		else
+		{
+			OPENFORT_ERR("Unable to return a response for Connect PKCE.");
+		}
+#else
+		if (!Response.success || !InitOAuthFlowData || InitOAuthFlowData->key.IsEmpty())
+		{
+			FString Msg;
 
-	// 			OPENFORT_WARN("Login device flow initialization attempt failed.");
-	// 			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
-	// 			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+			OPENFORT_WARN("Login device flow initialization attempt failed.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
 
-	// 			return;
-	// 		}
-	// 		FString Err;
+			return;
+		}
+		FString Err;
 
-	// 		FPlatformProcess::LaunchURL(*InitDeviceFlowData->url, nullptr, &Err);
-	// 		if (Err.Len())
-	// 		{
-	// 			FString Msg = "Failed to connect to Browser: " + Err;
+		FPlatformProcess::LaunchURL(*InitOAuthFlowData->url, nullptr, &Err);
+		if (!Err.IsEmpty())
+		{
+			FString Msg = "Failed to connect to Browser: " + Err;
 
-	// 			OPENFORT_ERR("%s", *Msg);
-	// 			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
-	// 			return;
-	// 		}
-	// 		FPoolOAuthRequest Data{InitOAuthFlowData->key} PoolOAuth(UStructToJsonString(Data));
-	// #endif
-	// 	}
+			OPENFORT_ERR("%s", *Msg);
+			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+			return;
+		}
+		FPoolOAuthRequest Data{InitOAuthFlowData->key};
+		PoolOAuth(Data, ResponseDelegate);
+#endif
+	}
 }
 
 void UOpenfortOpenfortSDK::OnInitOAuthResponse(FOpenfortJSResponse Response)
