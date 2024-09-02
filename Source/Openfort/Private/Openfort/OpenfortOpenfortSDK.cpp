@@ -89,7 +89,6 @@ void UOpenfortOpenfortSDK::AuthenticateWithOAuth(const FOAuthInitRequest &Reques
 
 void UOpenfortOpenfortSDK::InitOAuth(const FOAuthInitRequest &Request, const FOpenfortOpenfortSDKResponseDelegate &ResponseDelegate)
 {
-	OPENFORT_LOG("YO: InitOAuth init bitch.")
 	CallJS(OpenfortOpenfortSDKAction::INIT_OAUTH, UStructToJsonString(Request), ResponseDelegate, FOpenfortJSResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::OnInitOAuthResponse));
 }
 
@@ -361,19 +360,19 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 
 void UOpenfortOpenfortSDK::OnInitOAuthResponse(FOpenfortJSResponse Response)
 {
-	// if (auto ResponseDelegate = GetResponseDelegate(Response))
-	// {
-	// 	FString Msg;
-	// 	bool bSuccess = true;
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
 
-	// 	if (!Response.success)
-	// 	{
-	// 		OPENFORT_WARN("InitOAuth failed.");
-	// 		Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
-	// 		bSuccess = false;
-	// 	}
-	// 	ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
-	// }
+		if (!Response.success)
+		{
+			OPENFORT_WARN("InitOAuth failed.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnUnlinkOAuthResponse(FOpenfortJSResponse Response)

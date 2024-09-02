@@ -131,11 +131,11 @@ struct OPENFORT_API FEthereumProviderRequest
 UENUM(BlueprintType)
 enum class EOAuthProvider : uint8
 {
-	Discord UMETA(DisplayName = "discord"),
-	EpicGames UMETA(DisplayName = "epic_games"),
-	Facebook UMETA(DisplayName = "facebook"),
-	Google UMETA(DisplayName = "google"),
-	Twitter UMETA(DisplayName = "twitter")
+	discord UMETA(DisplayName = "discord"),
+	epic_games UMETA(DisplayName = "epic_games"),
+	facebook UMETA(DisplayName = "facebook"),
+	google UMETA(DisplayName = "google"),
+	twitter UMETA(DisplayName = "twitter")
 };
 
 USTRUCT(BlueprintType)

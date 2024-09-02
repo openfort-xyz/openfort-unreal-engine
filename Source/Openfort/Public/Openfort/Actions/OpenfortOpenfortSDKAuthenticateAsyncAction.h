@@ -42,9 +42,6 @@ private:
 
 	bool bIsAuthenticate = false;
 
-	UPROPERTY()
-	UObject *WorldContextObject;
-
 	EOAuthProvider Provider;
 	FOAuthInitRequestOptions Options;
 	bool bUsePooling;

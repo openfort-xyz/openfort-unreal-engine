@@ -29,7 +29,6 @@ void UOpenfortOpenfortSDKAuthenticateAsyncActions::Activate()
 
 		return;
 	}
-	OPENFORT_LOG("YO: WhenReady.")
 	auto Subsystem = GetSubsystem();
 	if (Subsystem)
 	{
@@ -44,12 +43,10 @@ void UOpenfortOpenfortSDKAuthenticateAsyncActions::Activate()
 
 void UOpenfortOpenfortSDKAuthenticateAsyncActions::DoAuthenticate(TWeakObjectPtr<UOpenfortJSConnector> JSConnector)
 {
-	OPENFORT_LOG("YO: GetSubsystem");
 	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
 
 	if (OpenfortSDK.IsValid())
 	{
-		OPENFORT_LOG("YO: action yo.");
 		FOAuthInitRequest Request(Provider, Options, bUsePooling);
 		OpenfortSDK->InitOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKAuthenticateAsyncActions::OnAuthenticate));
 		// OpenfortSDK->AuthenticateWithOAuth(Request, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKAuthenticateAsyncActions::OnAuthenticate));
