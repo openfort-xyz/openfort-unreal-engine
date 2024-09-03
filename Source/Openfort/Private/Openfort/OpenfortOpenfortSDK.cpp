@@ -524,15 +524,11 @@ void UOpenfortOpenfortSDK::OnSendSignatureTransactionIntentRequestResponse(FOpen
 		FString Msg;
 		bool bSuccess = true;
 
-		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("id")))
+		if (!Response.success)
 		{
-			OPENFORT_WARN("Could not fetch user from Openfort.");
+			OPENFORT_WARN("sendTransaction failed.");
 			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
 			bSuccess = false;
-		}
-		else
-		{
-			Msg = Response.JsonObject->GetStringField(TEXT("id"));
 		}
 		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
 	}

@@ -10,7 +10,7 @@ class OPENFORT_API UOpenfortOpenfortSDKSignTransactionAsyncAction : public UOpen
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOpenfortSDKSignTransactionOutputPin, FString, ErrorMessage, FString, Transaction);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOpenfortSDKSignTransactionOutputPin, FString, ErrorMessage, const struct FTransactionIntentResponse &, Response);
 
 public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
@@ -22,7 +22,7 @@ private:
 	FSignatureTransactionIntentRequest TransactionRequest;
 
 	UPROPERTY(BlueprintAssignable)
-	FOpenfortSDKSignTransactionOutputPin TransactionSigned;
+	FOpenfortSDKSignTransactionOutputPin Success;
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKSignTransactionOutputPin Failed;
 

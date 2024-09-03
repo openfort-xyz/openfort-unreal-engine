@@ -173,7 +173,7 @@ struct OPENFORT_API FEvmTransactionReceipt
 	UPROPERTY()
 	FString logsBloom;
 
-	// Either 1 (success) or 0 (failure) encoded as a hexadecimal.
+	// Either 1 (success) or 0 (failure).
 	UPROPERTY()
 	FString status;
 
@@ -188,4 +188,16 @@ struct OPENFORT_API FEvmTransactionReceipt
 
 	UPROPERTY()
 	FString type;
+};
+
+USTRUCT(BlueprintType, meta = (HasNativeBreak = "/Script/Openfort.OpenfortBlueprintLibrary.BreakFTransactionIntentResponse"))
+struct OPENFORT_API FTransactionIntentResponse
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FString id;
+
+	UPROPERTY(BlueprintReadOnly)
+	FEvmTransactionReceipt response;
 };

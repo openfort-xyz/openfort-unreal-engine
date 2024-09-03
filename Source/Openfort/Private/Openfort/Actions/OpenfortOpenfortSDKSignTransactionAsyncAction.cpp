@@ -17,7 +17,9 @@ void UOpenfortOpenfortSDKSignTransactionAsyncAction::Activate()
 	{
 		FString Err = "EVM Sign Transaction failed due to missing world or world context object.";
 		OPENFORT_WARN("%s", *Err)
-		Failed.Broadcast(Err, TEXT(""));
+		FTransactionIntentResponse EmptyReceipt;
+
+		Failed.Broadcast(Err, EmptyReceipt);
 		return;
 	}
 
@@ -34,12 +36,16 @@ void UOpenfortOpenfortSDKSignTransactionAsyncAction::OnSignTransactionResponse(F
 {
 	if (Result.Success)
 	{
+		auto Receipt = JsonObjectToUStruct<FTransactionIntentResponse>(Result.Response.JsonObject);
+
 		OPENFORT_LOG("EVM Sign Transaction success")
-		TransactionSigned.Broadcast(TEXT(""), Result.Message);
+		Success.Broadcast(TEXT(""), Receipt.GetValue());
 	}
 	else
 	{
 		OPENFORT_LOG("EVM Sign Transaction failed")
-		Failed.Broadcast(Result.Message, TEXT(""));
+		FTransactionIntentResponse EmptyReceipt;
+
+		Failed.Broadcast(Result.Message, EmptyReceipt);
 	}
 }
