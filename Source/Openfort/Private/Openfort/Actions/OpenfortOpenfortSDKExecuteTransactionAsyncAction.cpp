@@ -1,16 +1,19 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "Openfort/Actions/OpenfortOpenfortSDKExecuteTransactionAsyncAction.h"
-
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"
+#include "HttpModule.h"
+#include "Interfaces/IHttpRequest.h"
+#include "Interfaces/IHttpResponse.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 
-UOpenfortOpenfortSDKExecuteTransactionAsyncAction *UOpenfortOpenfortSDKExecuteTransactionAsyncAction::ExecuteTransaction(UObject *WorldContextObject, const FSignatureTransactionIntentRequest &Request)
+UOpenfortOpenfortSDKExecuteTransactionAsyncAction *UOpenfortOpenfortSDKExecuteTransactionAsyncAction::ExecuteTransaction(UObject *WorldContextObject, const FString &AccessToken)
 {
 	UOpenfortOpenfortSDKExecuteTransactionAsyncAction *OpenfortSDKExecuteTransactionBlueprintNode = NewObject<UOpenfortOpenfortSDKExecuteTransactionAsyncAction>();
 	OpenfortSDKExecuteTransactionBlueprintNode->WorldContextObject = WorldContextObject;
-	OpenfortSDKExecuteTransactionBlueprintNode->TransactionRequest = Request;
+	OpenfortSDKExecuteTransactionBlueprintNode->AccessToken = AccessToken;
 	return OpenfortSDKExecuteTransactionBlueprintNode;
 }
 
@@ -18,34 +21,55 @@ void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::Activate()
 {
 	if (!WorldContextObject || !WorldContextObject->GetWorld())
 	{
-		FString Err = "EVM Execute Transaction failed due to missing world or world "
-					  "context object.";
+		FString Err = "EVM Execute Transaction failed due to missing world or world context object.";
 		OPENFORT_WARN("%s", *Err)
-		Failed.Broadcast(Err, TEXT(""));
+		Failed.Broadcast(Err, TEXT(""), TEXT(""));
 		return;
 	}
 
-	GetSubsystem()->WhenReady(this, &UOpenfortOpenfortSDKExecuteTransactionAsyncAction::DoExecuteTransaction);
+	DoExecuteTransaction();
 }
 
-void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::DoExecuteTransaction(TWeakObjectPtr<UOpenfortJSConnector> JSConnector)
+void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::DoExecuteTransaction()
 {
-	// Get OpenfortSDK
-	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
-	// Run ExecuteTransaction
-	OpenfortSDK->SendSignatureTransactionIntentRequest(TransactionRequest, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnExecuteTransactionResponse));
+	// Create HTTP request
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+	HttpRequest->SetURL(TEXT("https://openfort-auth-non-custodial.vercel.app/api/protected-collect"));
+	HttpRequest->SetVerb(TEXT("POST"));
+	HttpRequest->SetHeader(TEXT("Authorization"), FString::Printf(TEXT("Bearer %s"), *AccessToken));
+	HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+	HttpRequest->SetHeader(TEXT("Accept"), TEXT("application/json"));
+
+	// Set up callback for when the request completes
+	HttpRequest->OnProcessRequestComplete().BindUObject(this, &UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnHttpRequestComplete);
+
+	// Send the request
+	HttpRequest->ProcessRequest();
 }
 
-void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnExecuteTransactionResponse(FOpenfortOpenfortSDKResult Result)
+void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnHttpRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess)
 {
-	if (Result.Success)
+	if (bSuccess && Response.IsValid())
 	{
-		OPENFORT_LOG("EVM Send Transaction success")
-		TransactionSent.Broadcast(TEXT(""), Result.Message);
+		FString ResponseString = Response->GetContentAsString();
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ResponseString);
+
+		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
+		{
+			FString UserOperationHash, TransactionIntentId;
+			JsonObject->TryGetStringField("userOperationHash", UserOperationHash);
+			JsonObject->TryGetStringField("transactionIntentId", TransactionIntentId);
+
+			TransactionSent.Broadcast(TEXT(""), TransactionIntentId, UserOperationHash);
+		}
+		else
+		{
+			Failed.Broadcast(TEXT("Failed to parse JSON response"), TEXT(""), TEXT(""));
+		}
 	}
 	else
 	{
-		OPENFORT_LOG("EVM Send Transaction failed")
-		Failed.Broadcast(Result.Message, TEXT(""));
+		Failed.Broadcast(TEXT("HTTP Request failed"), TEXT(""), TEXT(""));
 	}
 }

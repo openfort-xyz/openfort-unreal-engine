@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "OpenfortBlueprintAsyncAction.h"
+#include "Interfaces/IHttpRequest.h"
 #include "OpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction.generated.h"
 
 /**
@@ -26,6 +27,7 @@ public:
 private:
 	void DoConfigureEmbeddedSigner(TWeakObjectPtr<class UOpenfortJSConnector> JSGetConnector);
 	void OnConfigureEmbeddedSignerResponse(FOpenfortOpenfortSDKResult Result);
+	void OnHttpRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess);
 
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKConfigureEmbeddedSignerOutputPin Success;
@@ -33,4 +35,6 @@ private:
 	FOpenfortSDKConfigureEmbeddedSignerOutputPin Failed;
 
 	FEmbeddedSignerRequest ShieldConfig;
+	FSignatureTransactionIntentRequest TransactionRequest;
+	FString AccessToken;
 };

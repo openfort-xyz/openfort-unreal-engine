@@ -1,36 +1,36 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Openfort/OpenfortOpenfortSDK.h"
-#include "OpenfortBlueprintAsyncAction.h"
+#include "Kismet/BlueprintAsyncActionBase.h"
+#include "HttpModule.h"
+
 #include "OpenfortOpenfortSDKExecuteTransactionAsyncAction.generated.h"
 
-/**
- * Async action blueprint node for EVM Execute Transaction
- */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOpenfortSDKExecuteTransactionOutputPin, FString, ErrorMessage, FString, TransactionIntentId, FString, UserOperationHash);
+
 UCLASS()
-class OPENFORT_API UOpenfortOpenfortSDKExecuteTransactionAsyncAction : public UOpenfortBlueprintAsyncAction
+class OPENFORT_API UOpenfortOpenfortSDKExecuteTransactionAsyncAction : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOpenfortSDKExecuteTransactionOutputPin, FString, ErrorMessage, FString, Transaction);
-
 public:
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", BlueprintInternalUseOnly = "true"), Category = "Openfort")
-	static UOpenfortOpenfortSDKExecuteTransactionAsyncAction *ExecuteTransaction(UObject *WorldContextObject, const FSignatureTransactionIntentRequest &Request);
+	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true", WorldContext = "WorldContextObject", Category = "Openfort"))
+	static UOpenfortOpenfortSDKExecuteTransactionAsyncAction *ExecuteTransaction(UObject *WorldContextObject, const FString &AccessToken);
 
 	virtual void Activate() override;
 
-private:
-	FSignatureTransactionIntentRequest TransactionRequest;
-
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKExecuteTransactionOutputPin TransactionSent;
+
 	UPROPERTY(BlueprintAssignable)
 	FOpenfortSDKExecuteTransactionOutputPin Failed;
 
-	void DoExecuteTransaction(TWeakObjectPtr<class UOpenfortJSConnector> JSGetConnector);
-	void OnExecuteTransactionResponse(FOpenfortOpenfortSDKResult Result);
+private:
+	UPROPERTY()
+	UObject *WorldContextObject;
+
+	FString AccessToken;
+
+	void DoExecuteTransaction();
+	void OnHttpRequestComplete(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bSuccess);
 };

@@ -35,8 +35,8 @@ public class Openfort : ModuleRules
             {
                 "Core",
                 "JsonUtilities",
-				// ... add other public dependencies that you statically link with here ...
-			}
+                "HTTP"
+            }
         );
 
 
