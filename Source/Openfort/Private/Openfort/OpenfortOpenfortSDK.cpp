@@ -260,12 +260,44 @@ void UOpenfortOpenfortSDK::OnInitializeResponse(FOpenfortJSResponse Response)
 
 void UOpenfortOpenfortSDK::OnLoginResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnLoginResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("id")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("id"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnSignupResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnSignupResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("id")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("id"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnLinkEmailPasswordResponse(FOpenfortJSResponse Response)
@@ -530,7 +562,19 @@ void UOpenfortOpenfortSDK::OnGetAccessTokenResponse(FOpenfortJSResponse Response
 
 void UOpenfortOpenfortSDK::OnValidateAndRefreshTokenResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnValidateAndRefreshTokenResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success)
+		{
+			OPENFORT_WARN("Could not validate and refresh.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnSendSignatureTransactionIntentRequestResponse(FOpenfortJSResponse Response)
@@ -552,12 +596,44 @@ void UOpenfortOpenfortSDK::OnSendSignatureTransactionIntentRequestResponse(FOpen
 
 void UOpenfortOpenfortSDK::OnSignMessageResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnSignMessageResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("result")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("result"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnSignTypedDataResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnSignTypedDataResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("result")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("result"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnSendSignatureSessionRequestResponse(FOpenfortJSResponse Response)
