@@ -398,7 +398,23 @@ void UOpenfortOpenfortSDK::OnInitLinkOAuthResponse(FOpenfortJSResponse Response)
 
 void UOpenfortOpenfortSDK::OnAuthenticateWithThirdPartyProviderResponse(FOpenfortJSResponse Response)
 {
-	// Implementation for OnAuthenticateWithThirdPartyProviderResponse
+	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	{
+		FString Msg;
+		bool bSuccess = true;
+
+		if (!Response.success || !Response.JsonObject->HasTypedField<EJson::String>(TEXT("id")))
+		{
+			OPENFORT_WARN("Could not fetch user from Openfort.");
+			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
+			bSuccess = false;
+		}
+		else
+		{
+			Msg = Response.JsonObject->GetStringField(TEXT("id"));
+		}
+		ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+	}
 }
 
 void UOpenfortOpenfortSDK::OnInitSiweResponse(FOpenfortJSResponse Response)
