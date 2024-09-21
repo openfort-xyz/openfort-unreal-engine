@@ -5,7 +5,7 @@
 #include "Openfort/Misc/OpenfortLogging.h"
 #include "Openfort/OpenfortJSConnector.h"
 #if USING_BUNDLED_CEF
-#include "SWebBrowser.h"
+#include "WebBrowser.h"
 #endif
 #include "Openfort/Assets/OpenfortSDKResource.h"
 #include "Openfort/OpenfortSubsystem.h"
@@ -60,8 +60,9 @@ bool UOpenfortBrowserWidget::IsPageLoaded() const
 {
 #if USING_BUNDLED_CEF
 	return WebBrowserWidget.IsValid() && WebBrowserWidget->IsLoaded();
+#else
+	return false; // Ensure this is reachable
 #endif
-	return false;
 }
 
 void UOpenfortBrowserWidget::ExecuteJS(const FString &ScriptText) const
@@ -77,28 +78,21 @@ void UOpenfortBrowserWidget::ExecuteJS(const FString &ScriptText) const
 void UOpenfortBrowserWidget::SetBrowserContent()
 {
 #if USING_BUNDLED_CEF
-	FSoftObjectPath AssetRef(TEXT("/Script/Openfort.OpenfortSDKResource'/Openfort/"
-								  "PackagedResources/index.index'"));
-	if (UObject *LoadedAsset = AssetRef.TryLoad())
+	if (!WebBrowserWidget.IsValid())
+	{
+		OPENFORT_ERR("WebBrowserWidget is not valid");
+		return; // This will make subsequent code unreachable if WebBrowserWidget is not valid
+	}
+
+	FSoftObjectPath AssetRef(TEXT("/Script/Openfort.OpenfortSDKResource'/Openfort/PackagedResources/index.index'"));
+	if (UObject* LoadedAsset = AssetRef.TryLoad())
 	{
 		if (auto Resource = Cast<UOpenfortSDKResource>(LoadedAsset))
 		{
-			if (!WebBrowserWidget.IsValid())
-			{
-				OPENFORT_ERR("no browser")
-				return;
-			}
+			const FString IndexHtml = FString("<!doctype html><html lang='en'><head><meta charset='utf-8'><title>GameSDK Bridge</title><script>") +
+				Resource->Js + FString("</script></head><body><h1>Bridge Running</h1></body></html>");
 
-			const FString IndexHtml = FString("<!doctype html><html lang='en'><head><meta "
-											  "charset='utf-8'><title>GameSDK Bridge</title><script>") +
-									  Resource->Js + FString("</script></head><body><h1>Bridge Running</h1></body></html>");
-
-			// OPENFORT_LOG("Loaded resource: %s", *Resource->GetName())
 			WebBrowserWidget->LoadString(IndexHtml, TEXT("file:///openfort/index.html"));
-			// WebBrowserWidget->LoadURL(FString::Printf(TEXT("%s%s"),
-			// TEXT("file:///"),
-			// *FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectContentDir(),
-			// TEXT("html"), TEXT("index.html")))));
 		}
 	}
 #endif

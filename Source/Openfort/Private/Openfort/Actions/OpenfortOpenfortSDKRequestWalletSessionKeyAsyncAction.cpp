@@ -32,11 +32,21 @@ void UOpenfortOpenfortSDKRequestWalletSessionKey::Activate()
 
 void UOpenfortOpenfortSDKRequestWalletSessionKey::DoRequestWalletSessionKey(TWeakObjectPtr<UOpenfortJSConnector> JSConnector)
 {
-	auto OpenfortSDK = GetSubsystem()->GetOpenfortSDK();
+	// Assuming GetOpenfortSDK() returns a raw pointer
+	UOpenfortOpenfortSDK* OpenfortSDKPtr = GetSubsystem()->GetOpenfortSDK();
+
+	// Convert to TWeakObjectPtr for safety
+	TWeakObjectPtr<UOpenfortOpenfortSDK> OpenfortSDK(OpenfortSDKPtr);
 
 	if (OpenfortSDK.IsValid())
 	{
-		OpenfortSDK->SendSignatureSessionRequest(TransactionRequest, UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this, &UOpenfortOpenfortSDKRequestWalletSessionKey::OnRequestWalletSessionKeyResponse));
+		OpenfortSDK->SendSignatureSessionRequest(TransactionRequest,
+			UOpenfortOpenfortSDK::FOpenfortOpenfortSDKResponseDelegate::CreateUObject(this,
+				&UOpenfortOpenfortSDKRequestWalletSessionKey::OnRequestWalletSessionKeyResponse));
+	}
+	else
+	{
+		OPENFORT_ERR("OpenfortSDK was not valid while trying to request wallet session key.");
 	}
 }
 
