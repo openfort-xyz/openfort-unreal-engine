@@ -4,6 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+
+// Ensure you include the header for UOpenfortOpenfortSDK
+#include "OpenfortOpenfortSDK.h"  // Adjust this path as necessary
+
 // clang-format off
 #include "OpenfortSubsystem.generated.h"
 // clang-format on
@@ -11,7 +15,7 @@
 DECLARE_MULTICAST_DELEGATE_OneParam(FOpenfortSubsystemReadyDelegate, TWeakObjectPtr<class UOpenfortJSConnector>);
 
 /**
- *
+ * Openfort Subsystem class that handles the integration with the Openfort SDK.
  */
 UCLASS()
 class OPENFORT_API UOpenfortSubsystem : public UGameInstanceSubsystem
@@ -21,36 +25,37 @@ class OPENFORT_API UOpenfortSubsystem : public UGameInstanceSubsystem
 public:
 	UOpenfortSubsystem();
 
-	virtual void Initialize(FSubsystemCollectionBase &Collection) override;
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
-	TWeakObjectPtr<class UOpenfortOpenfortSDK> GetOpenfortSDK() const
-	{
-		return MakeWeakObjectPtr(OpenfortSDK);
-	}
+	/** Get the Openfort SDK instance. */
+	UOpenfortOpenfortSDK* GetOpenfortSDK() const { return OpenfortSDK; }
 
+	/** Check if the subsystem is ready for use. */
 	bool IsReady() const { return bIsReady; }
 
-	// FOnGameViewportTick& OnGameViewportTick() { return GameViewportTickEvent; }
-
-	// Execute a delegate when the subsystem is ready (i.e.: when the browser is
-	// running and the Openfort SDK game bridge has loaded).
+	/**
+	 * Bind a function to be called when the subsystem is ready.
+	 *
+	 * @param Object The object to bind the function to.
+	 * @param Func The function to bind.
+	 */
 	template <class UserClass>
 #if (ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 1)
-	void WhenReady(UserClass *Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TMethodPtr<UserClass> Func);
+	void WhenReady(UserClass* Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TMethodPtr<UserClass> Func);
 #else
-	void WhenReady(UserClass *Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TUObjectMethodDelegate<UserClass>::FMethodPtr Func);
+	void WhenReady(UserClass* Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TUObjectMethodDelegate<UserClass>::FMethodPtr Func);
 #endif
 
 private:
 	UPROPERTY()
-	class UOpenfortBrowserUserWidget *BrowserWidget = nullptr;
+	UOpenfortOpenfortSDK* OpenfortSDK = nullptr;
 
 	UPROPERTY()
-	class UOpenfortBlui *OpenfortBlui = nullptr;
+	class UOpenfortBrowserUserWidget* BrowserWidget = nullptr;
 
 	UPROPERTY()
-	class UOpenfortOpenfortSDK *OpenfortSDK = nullptr;
+	class UOpenfortBlui* OpenfortBlui = nullptr;
 
 	bool bHasSetupGameBridge = false;
 	bool bIsReady = false;
@@ -58,7 +63,8 @@ private:
 
 	FDelegateHandle WorldTickHandle;
 	FDelegateHandle ViewportCreatedHandle;
-#if PLATFORM_ANDROID | PLATFORM_IOS
+
+#if PLATFORM_ANDROID || PLATFORM_IOS
 	FDelegateHandle EngineInitCompleteHandle;
 #endif
 
@@ -66,5 +72,9 @@ private:
 	void OnBridgeReady();
 	void ManageBridgeDelegateQueue();
 	void OnViewportCreated();
-	void WorldTickStart(UWorld *World, ELevelTick TickType, float DeltaSeconds);
+	void WorldTickStart(UWorld* World, ELevelTick TickType, float DeltaSeconds);
 };
+
+// Explicit instantiation declarations for WhenReady, if needed
+// template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKAuthenticateAsyncActions>(UOpenfortOpenfortSDKAuthenticateAsyncActions *, typename FOpenfortSubsystemReadyDelegate::FDelegate::TMethodPtr<UOpenfortOpenfortSDKAuthenticateAsyncActions>);
+// Add more explicit instantiation declarations as necessary...

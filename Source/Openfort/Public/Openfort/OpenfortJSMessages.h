@@ -106,12 +106,13 @@ struct OPENFORT_API FOpenfortJSResponse
 			FString Error;
 			if (JSResponse.JsonObject.IsValid())
 			{
-				JSResponse.JsonObject->TryGetNumberField("errorType", ErrType);
-				JSResponse.JsonObject->TryGetStringField("error", Error);
+				JSResponse.JsonObject->TryGetNumberField(TEXT("errorType"), ErrType);
+				JSResponse.JsonObject->TryGetStringField(TEXT("error"), Error);
 			}
-			JSResponse.Error = FOpenfortResponseError{static_cast<EOpenfortOpenfortSDKError>(ErrType), Error};
+			JSResponse.Error = FOpenfortResponseError{ static_cast<EOpenfortOpenfortSDKError>(ErrType), Error };
 		}
 
 		return Response;
+
 	}
 };

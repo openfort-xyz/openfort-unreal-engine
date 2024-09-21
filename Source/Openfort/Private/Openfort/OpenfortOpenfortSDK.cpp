@@ -330,9 +330,9 @@ void UOpenfortOpenfortSDK::OnVerifyEmailResponse(FOpenfortJSResponse Response)
 	// Implementation for OnVerifyEmailResponse
 }
 
-void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response, const FString &RedirectTo)
+void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse Response, const FString& RedirectTo)
 {
-	if (auto ResponseDelegate = GetResponseDelegate(Response))
+	if (auto ResponseDelegateOpt = GetResponseDelegate(Response))
 	{
 		const auto InitOAuthFlowData = JsonObjectToUStruct<FOpenfortOpenfortSDKInitOAuthData>(Response.JsonObject);
 #if PLATFORM_ANDROID || PLATFORM_IOS || PLATFORM_MAC
@@ -356,13 +356,13 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 				OnDismissed = FOpenfortOpenfortSDKOnDismissedDelegate::CreateUObject(this, &UOpenfortOpenfortSDK::HandleOnLoginDismissed);
 				LaunchAndroidUrl(Msg);
 #elif PLATFORM_IOS
-				[[OpenfortIOS instance] launchUrl:TCHAR_TO_ANSI(*Msg)];
+				[[OpenfortIOS instance]launchUrl:TCHAR_TO_ANSI(*Msg)];
 #elif PLATFORM_MAC
-				[[OpenfortMac instance] launchUrl:TCHAR_TO_ANSI(*Msg)
-								   forRedirectUri:TCHAR_TO_ANSI(*RedirectTo)];
+				[[OpenfortMac instance]launchUrl:TCHAR_TO_ANSI(*Msg)
+					forRedirectUri : TCHAR_TO_ANSI(*RedirectTo)];
 #endif
 			}
-			DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{bSuccess, Msg, Response});
+			DeepResponseDelegate.ExecuteIfBound(FOpenfortOpenfortSDKResult{ bSuccess, Msg, Response });
 		}
 		else
 		{
@@ -375,7 +375,7 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 
 			OPENFORT_WARN("Login device flow initialization attempt failed.");
 			Response.Error.IsSet() ? Msg = Response.Error->ToString() : Msg = Response.JsonObject->GetStringField(TEXT("error"));
-			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+			ResponseDelegateOpt->ExecuteIfBound(FOpenfortOpenfortSDKResult{ false, Msg, Response });
 
 			return;
 		}
@@ -387,11 +387,15 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 			FString Msg = "Failed to connect to Browser: " + Err;
 
 			OPENFORT_ERR("%s", *Msg);
-			ResponseDelegate->ExecuteIfBound(FOpenfortOpenfortSDKResult{false, Msg, Response});
+			ResponseDelegateOpt->ExecuteIfBound(FOpenfortOpenfortSDKResult{ false, Msg, Response });
 			return;
 		}
-		FPoolOAuthRequest Data{InitOAuthFlowData->key};
-		PoolOAuth(Data, ResponseDelegate);
+		FPoolOAuthRequest Data{ InitOAuthFlowData->key };
+		// Ensure that ResponseDelegateOpt is dereferenced properly
+		if (ResponseDelegateOpt.IsSet())
+		{
+			PoolOAuth(Data, ResponseDelegateOpt.GetValue());  // Dereference the TOptional
+		}
 #endif
 	}
 }
