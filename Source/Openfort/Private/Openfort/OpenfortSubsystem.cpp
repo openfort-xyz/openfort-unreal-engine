@@ -2,12 +2,22 @@
 
 #include "Openfort/OpenfortSubsystem.h"
 
+#include "Engine/GameInstance.h"
 #include "Blueprint/UserWidget.h"
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "Openfort/Misc/OpenfortLogging.h"
 #include "OpenfortBlui.h"
 #include "OpenfortBrowserUserWidget.h"
 #include "Openfort/OpenfortJSConnector.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKAuthenticateAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKExecuteTransactionAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKGetAccessTokenAsyncAction.h"
+#include <Openfort/Actions/OpenfortOpenfortSDKGetUserAsyncAction.h>
+#include <Openfort/Actions/OpenfortOpenfortSDKInitializationAsyncAction.h>
+#include <Openfort/Actions/OpenfortOpenfortSDKLogoutAsyncAction.h>
+#include <Openfort/Actions/OpenfortOpenfortSDKRequestWalletSessionKeyAsyncAction.h>
+#include <Openfort/Actions/OpenfortOpenfortSDKSignTransactionAsyncAction.h>
 
 UOpenfortSubsystem::UOpenfortSubsystem() { OPENFORT_LOG_FUNCSIG }
 
@@ -17,7 +27,7 @@ void UOpenfortSubsystem::Initialize(FSubsystemCollectionBase &Collection)
 	Super::Initialize(Collection);
 
 #if PLATFORM_ANDROID
-	// Enable DOM storage so we can use localStorage in the Android webview
+	// Enable DOM storage for localStorage in the Android webview
 	GConfig->SetBool(
 		TEXT("/Script/AndroidRuntimeSettings.AndroidRuntimeSettings"),
 		TEXT("bEnableDomStorage"), true, GEngineIni);
@@ -56,6 +66,7 @@ void UOpenfortSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+// Template function should typically be in the header file, but if you keep it here:
 template <class UserClass>
 #if (ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 1)
 void UOpenfortSubsystem::WhenReady(UserClass *Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TMethodPtr<UserClass> Func)
@@ -66,11 +77,46 @@ void UOpenfortSubsystem::WhenReady(UserClass *Object, typename FOpenfortSubsyste
 	OnReady.AddUObject(Object, Func);
 }
 
+// Explicit instantiations
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKGetAccessTokenAsyncAction>(
+	UOpenfortOpenfortSDKGetAccessTokenAsyncAction *,
+	void (UOpenfortOpenfortSDKGetAccessTokenAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKGetUserAsyncAction>(
+	UOpenfortOpenfortSDKGetUserAsyncAction *,
+	void (UOpenfortOpenfortSDKGetUserAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKAuthenticateWithThirdPartyProviderAsyncAction>(
+	UOpenfortOpenfortSDKAuthenticateWithThirdPartyProviderAsyncAction *,
+	void (UOpenfortOpenfortSDKAuthenticateWithThirdPartyProviderAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKInitializationAsyncAction>(
+	UOpenfortOpenfortSDKInitializationAsyncAction *,
+	void (UOpenfortOpenfortSDKInitializationAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKLogoutAsyncAction>(
+	UOpenfortOpenfortSDKLogoutAsyncAction *,
+	void (UOpenfortOpenfortSDKLogoutAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKRequestWalletSessionKey>(
+	UOpenfortOpenfortSDKRequestWalletSessionKey *,
+	void (UOpenfortOpenfortSDKRequestWalletSessionKey::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKSignTransactionAsyncAction>(
+	UOpenfortOpenfortSDKSignTransactionAsyncAction *,
+	void (UOpenfortOpenfortSDKSignTransactionAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKAuthenticateAsyncActions>(
+	UOpenfortOpenfortSDKAuthenticateAsyncActions *,
+	void (UOpenfortOpenfortSDKAuthenticateAsyncActions::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
+template void UOpenfortSubsystem::WhenReady<UOpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction>(
+	UOpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction *,
+	void (UOpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction::*)(TWeakObjectPtr<UOpenfortJSConnector, FWeakObjectPtr>));
+
 void UOpenfortSubsystem::OnBridgeReady()
 {
-	// When the bridge is ready our subsystem is ready to be used by game code.
-	// Set the bIsReady flag and broadcast the OnReady event for any waiting
-	// delegates.
+	// When the bridge is ready, our subsystem is ready for use
 	bIsReady = true;
 	ManageBridgeDelegateQueue();
 }
@@ -111,16 +157,15 @@ void UOpenfortSubsystem::SetupGameBridge()
 	}
 	if (!OpenfortBlui->GetJSConnector().IsValid())
 	{
-		OPENFORT_ERR(
-			"JSConnector not available, can't set up subsystem-ready event chain")
+		OPENFORT_ERR("JSConnector not available, can't set up subsystem-ready event chain")
 		return;
 	}
+
 	// Set up ready event chain
 	if (!IsReady())
 	{
 		OpenfortBlui->GetJSConnector()->AddCallbackWhenBridgeReady(
-			UOpenfortJSConnector::FOnBridgeReadyDelegate::FDelegate::CreateUObject(
-				this, &UOpenfortSubsystem::OnBridgeReady));
+			UOpenfortJSConnector::FOnBridgeReadyDelegate::FDelegate::CreateUObject(this, &UOpenfortSubsystem::OnBridgeReady));
 	}
 
 	// Prepare OpenfortSDK
@@ -139,9 +184,10 @@ void UOpenfortSubsystem::SetupGameBridge()
 	}
 	if (!BrowserWidget)
 	{
-		OPENFORT_ERR("Failed to create up BrowserWidget")
+		OPENFORT_ERR("Failed to create BrowserWidget")
 		return;
 	}
+
 	// Launch browser
 	if (!BrowserWidget->IsInViewport())
 	{
@@ -153,6 +199,7 @@ void UOpenfortSubsystem::SetupGameBridge()
 		OPENFORT_ERR("JSConnector not available, can't set up subsystem-ready event chain")
 		return;
 	}
+
 	// Set up ready event chain
 	if (!IsReady())
 	{
