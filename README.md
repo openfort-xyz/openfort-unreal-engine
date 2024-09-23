@@ -1,4 +1,5 @@
-![Openfort Protocol][banner-image]
+![Illustration_01](https://github.com/user-attachments/assets/a1bce733-336b-4e0a-956e-3b33196c4ad2)
+
 
 <div align="center">
   <h4>
