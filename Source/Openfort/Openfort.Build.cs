@@ -10,10 +10,8 @@ public class Openfort : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-#if UE_5_1_OR_LATER
-			IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
-#endif
-
+        IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
+        
         PublicIncludePaths.AddRange(
             new string[]
             {
@@ -28,50 +26,35 @@ public class Openfort : ModuleRules
 				// ... add other private include paths required here ...
 			}
         );
-
-
+        
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
                 "Core",
-                "JsonUtilities",
-                "HTTP"
-            }
-        );
-
-
-        PrivateDependencyModuleNames.AddRange(
-            new string[]
-            {
                 "CoreUObject",
                 "Engine",
                 "Slate",
                 "SlateCore",
-                "Json",
+                "JsonUtilities",
+                "HTTP",
                 "UMG",
-                "Projects", 
+                "OnlineSubsystem",
+                "WebBrowser",
+                "WebBrowserWidget"
+            }
+        );
+        
+        PrivateDependencyModuleNames.AddRange(
+            new string[]
+            {
+                "EngineSettings",
+                "Json",
+                "Projects"
 				// ... add private dependencies that you statically link with here ...
 			}
         );
 
-#if UE_5_0_OR_LATER
-			PublicDependencyModuleNames.Add("WebBrowserWidget");
-			PrivateDependencyModuleNames.Add("WebBrowser");
-			PublicDefinitions.Add("USING_BUNDLED_CEF=1");
-			PublicDefinitions.Add("USING_BLUI_CEF=0");
-#else
-        if (Target.Platform == UnrealTargetPlatform.Win64)
-        {
-            PrivateDependencyModuleNames.Add("Blu");
-            PublicDefinitions.Add("USING_BLUI_CEF=1");
-        }
-        else
-        {
-            PublicDefinitions.Add("USING_BLUI_CEF=0");
-        }
-
-        PublicDefinitions.Add("USING_BUNDLED_CEF=0");
-#endif
+        PublicDefinitions.Add("USING_BUNDLED_CEF=1");
 
         DynamicallyLoadedModuleNames.AddRange(
             new string[]

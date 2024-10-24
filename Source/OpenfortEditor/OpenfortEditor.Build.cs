@@ -8,9 +8,7 @@ public class OpenfortEditor : ModuleRules
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
-#if UE_5_1_OR_LATER
-			IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
-#endif
+	    IncludeOrderVersion = EngineIncludeOrderVersion.Latest;
 
         PublicIncludePaths.AddRange(
             new string[]

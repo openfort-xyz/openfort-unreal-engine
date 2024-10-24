@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Openfort/Actions/OpenfortOpenfortSDKAuthenticateAsyncAction.h"
-
 #include "Openfort/OpenfortOpenfortSDK.h"
 #include "Openfort/OpenfortSubsystem.h"
 #include "Openfort/Misc/OpenfortLogging.h"

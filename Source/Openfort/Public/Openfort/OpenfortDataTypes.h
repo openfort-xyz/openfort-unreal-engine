@@ -2,8 +2,8 @@
 
 #include "JsonObjectConverter.h"
 #include "Openfort/OpenfortJSMessages.h"
+#include "Misc/EngineVersion.h"
 #include "Openfort/OpenfortNames.h"
-
 #include "OpenfortDataTypes.generated.h"
 
 // This is the version of the Unreal Openfort SDK that is being used. This is not the version of the engine.
@@ -83,7 +83,7 @@ struct OPENFORT_API FOpenfortOpenfortSDKInitData
 	FString shieldUrl;
 
 	UPROPERTY()
-	bool bShieldDebug;
+	bool bShieldDebug = false;
 
 	UPROPERTY()
 	FString backendUrl;
@@ -167,7 +167,7 @@ struct OPENFORT_API FEvmTransactionReceipt
 	UPROPERTY()
 	FString gasUsed;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category="EvmTransactionReceiptLog")
 	TArray<FEvmTransactionReceiptLog> logs;
 
 	UPROPERTY()
@@ -198,6 +198,6 @@ struct OPENFORT_API FTransactionIntentResponse
 	UPROPERTY()
 	FString id;
 
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Category="TransactionIntentResponse")
 	FEvmTransactionReceipt response;
 };

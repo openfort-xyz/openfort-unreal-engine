@@ -6,6 +6,8 @@
 #include "CoreMinimal.h"
 #include "OpenfortBrowserUserWidget.generated.h"
 
+class UOpenfortJSConnector;
+
 UCLASS()
 class OPENFORT_API UOpenfortBrowserUserWidget : public UUserWidget
 {
@@ -17,7 +19,7 @@ public:
 	virtual void RemoveFromParent() override;
 	virtual void OnWidgetRebuilt() override;
 
-	TWeakObjectPtr<class UOpenfortJSConnector> GetJSConnector() const;
+	TWeakObjectPtr<UOpenfortJSConnector> GetJSConnector() const;
 
 private:
 	UPROPERTY()

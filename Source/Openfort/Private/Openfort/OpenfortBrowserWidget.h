@@ -7,21 +7,22 @@
 #include "IWebBrowserWindow.h"
 #endif
 #include "Components/Widget.h"
+#include "Widgets/SWidget.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "OpenfortBrowserWidget.generated.h"
+
+class UOpenfortJSConnector;
 
 UCLASS()
 class OPENFORT_API UOpenfortBrowserWidget : public UWidget
 {
 	GENERATED_BODY()
-
-	friend class UOpenfortJSConnector;
-
 public:
 	// Sets default values for this actor's properties
 	UOpenfortBrowserWidget();
 
 	// Get a pointer to the JSConnector
-	TWeakObjectPtr<class UOpenfortJSConnector> GetJSConnector() const;
+	TWeakObjectPtr<UOpenfortJSConnector> GetJSConnector() const;
 
 	bool IsPageLoaded() const;
 
@@ -44,7 +45,7 @@ private:
 	bool bShowInitialThrobber = false;
 
 	UPROPERTY()
-	class UOpenfortJSConnector *JSConnector = nullptr;
+	UOpenfortJSConnector *JSConnector = nullptr;
 
 	void SetBrowserContent();
 
