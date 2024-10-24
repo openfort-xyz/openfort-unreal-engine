@@ -4,11 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Engine/EngineBaseTypes.h"
+#include "Runtime/Launch/Resources/Version.h"
 // clang-format off
 #include "OpenfortSubsystem.generated.h"
 // clang-format on
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOpenfortSubsystemReadyDelegate, TWeakObjectPtr<class UOpenfortJSConnector>);
+class UOpenfortJSConnector;
+class UOpenfortOpenfortSDK;
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOpenfortSubsystemReadyDelegate, TWeakObjectPtr<UOpenfortJSConnector>);
 
 /**
  *
@@ -24,10 +29,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase &Collection) override;
 	virtual void Deinitialize() override;
 
-	TWeakObjectPtr<class UOpenfortOpenfortSDK> GetOpenfortSDK() const
-	{
-		return MakeWeakObjectPtr(OpenfortSDK);
-	}
+	TWeakObjectPtr<UOpenfortOpenfortSDK> GetOpenfortSDK() const;
 
 	bool IsReady() const { return bIsReady; }
 
@@ -47,10 +49,7 @@ private:
 	class UOpenfortBrowserUserWidget *BrowserWidget = nullptr;
 
 	UPROPERTY()
-	class UOpenfortBlui *OpenfortBlui = nullptr;
-
-	UPROPERTY()
-	class UOpenfortOpenfortSDK *OpenfortSDK = nullptr;
+	UOpenfortOpenfortSDK *OpenfortSDK = nullptr;
 
 	bool bHasSetupGameBridge = false;
 	bool bIsReady = false;

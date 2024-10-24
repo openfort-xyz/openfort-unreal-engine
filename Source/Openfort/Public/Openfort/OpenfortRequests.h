@@ -1,6 +1,9 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Serialization/JsonWriter.h"
+#include "Serialization/JsonSerializer.h"
+#include "Dom/JsonObject.h"
 #include "OpenfortRequests.generated.h"
 
 USTRUCT(BlueprintType)
@@ -196,7 +199,8 @@ struct OPENFORT_API FInitLinkOAuthRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FOAuthInitRequestOptions Options;
 
-	FInitLinkOAuthRequest() {}
+	FInitLinkOAuthRequest(): Provider(){}
+
 	FInitLinkOAuthRequest(EOAuthProvider InProvider, const FString &InAuthToken, const FOAuthInitRequestOptions &InOptions)
 		: Provider(InProvider), AuthToken(InAuthToken), Options(InOptions) {}
 };
@@ -464,7 +468,8 @@ struct OPENFORT_API FThirdPartyProviderRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	ETokenType TokenType;
 
-	FThirdPartyProviderRequest() {}
+	FThirdPartyProviderRequest(): Provider(), TokenType(){}
+
 	FThirdPartyProviderRequest(EThirdPartyOAuthProvider InProvider, const FString &InToken, ETokenType InTokenType)
 		: Provider(InProvider), Token(InToken), TokenType(InTokenType) {}
 };
@@ -608,7 +613,8 @@ struct OPENFORT_API FUnlinkOAuthRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FString AuthToken;
 
-	FUnlinkOAuthRequest() {}
+	FUnlinkOAuthRequest(): Provider(){}
+
 	FUnlinkOAuthRequest(EOAuthProvider InProvider, const FString &InAuthToken)
 		: Provider(InProvider), AuthToken(InAuthToken) {}
 };
@@ -627,7 +633,8 @@ struct OPENFORT_API FOAuthInitRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	bool bUsePooling;
 
-	FOAuthInitRequest() : bUsePooling(false) {}
+	FOAuthInitRequest() : Provider(), bUsePooling(false){}
+
 	FOAuthInitRequest(EOAuthProvider InProvider, const FOAuthInitRequestOptions &InOptions = FOAuthInitRequestOptions(), bool InUsePooling = false)
 		: Provider(InProvider), Options(InOptions), bUsePooling(InUsePooling) {}
 };
@@ -683,7 +690,7 @@ struct OPENFORT_API FShieldAuthentication
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FString TokenType;
 
-	FShieldAuthentication() {}
+	FShieldAuthentication(): Auth() {}
 
 	FShieldAuthentication(EShieldAuthType InAuth, const FString &InToken, const FString &InAuthProvider = TEXT(""), const FString &InTokenType = TEXT(""))
 		: Auth(InAuth), Token(InToken), AuthProvider(InAuthProvider), TokenType(InTokenType) {}
@@ -703,7 +710,7 @@ struct OPENFORT_API FEmbeddedSignerRequest
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Openfort")
 	FString RecoveryPassword;
 
-	FEmbeddedSignerRequest() {}
+	FEmbeddedSignerRequest(): ChainId(0){}
 
 	FEmbeddedSignerRequest(int32 InChainId, const FShieldAuthentication &InShieldAuthentication, const FString &InRecoveryPassword = TEXT(""))
 		: ChainId(InChainId), ShieldAuthentication(InShieldAuthentication), RecoveryPassword(InRecoveryPassword) {}

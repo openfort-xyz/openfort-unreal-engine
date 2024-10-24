@@ -1,23 +1,23 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Openfort/OpenfortSubsystem.h"
-
-#include "Engine/GameInstance.h"
-#include "Blueprint/UserWidget.h"
-#include "Openfort/OpenfortOpenfortSDK.h"
-#include "Openfort/Misc/OpenfortLogging.h"
-#include "OpenfortBlui.h"
-#include "OpenfortBrowserUserWidget.h"
-#include "Openfort/OpenfortJSConnector.h"
-#include "Openfort/Actions/OpenfortOpenfortSDKAuthenticateAsyncAction.h"
-#include "Openfort/Actions/OpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction.h"
-#include "Openfort/Actions/OpenfortOpenfortSDKExecuteTransactionAsyncAction.h"
-#include "Openfort/Actions/OpenfortOpenfortSDKGetAccessTokenAsyncAction.h"
 #include <Openfort/Actions/OpenfortOpenfortSDKGetUserAsyncAction.h>
 #include <Openfort/Actions/OpenfortOpenfortSDKInitializationAsyncAction.h>
 #include <Openfort/Actions/OpenfortOpenfortSDKLogoutAsyncAction.h>
 #include <Openfort/Actions/OpenfortOpenfortSDKRequestWalletSessionKeyAsyncAction.h>
 #include <Openfort/Actions/OpenfortOpenfortSDKSignTransactionAsyncAction.h>
+#include "OpenfortBrowserUserWidget.h"
+#include "Blueprint/UserWidget.h"
+#include "Engine/GameInstance.h"
+#include "Engine/GameViewportClient.h"
+#include "Openfort/OpenfortJSConnector.h"
+#include "Openfort/OpenfortOpenfortSDK.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKAuthenticateAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKAuthenticateWithThirdPartyProviderAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKConfigureEmbeddedSignerAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKExecuteTransactionAsyncAction.h"
+#include "Openfort/Actions/OpenfortOpenfortSDKGetAccessTokenAsyncAction.h"
+#include "Openfort/Misc/OpenfortLogging.h"
 
 UOpenfortSubsystem::UOpenfortSubsystem() { OPENFORT_LOG_FUNCSIG }
 
@@ -48,12 +48,6 @@ void UOpenfortSubsystem::Deinitialize()
 	OPENFORT_LOG_FUNCSIG
 
 	BrowserWidget = nullptr;
-
-#if USING_BLUI_CEF
-	OpenfortBlui->ConditionalBeginDestroy();
-	OpenfortBlui = nullptr;
-#endif
-
 	OpenfortSDK = nullptr;
 
 #if PLATFORM_ANDROID | PLATFORM_IOS
@@ -66,13 +60,14 @@ void UOpenfortSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
+TWeakObjectPtr<UOpenfortOpenfortSDK> UOpenfortSubsystem::GetOpenfortSDK() const
+{
+	return MakeWeakObjectPtr<UOpenfortOpenfortSDK>(OpenfortSDK);
+}
+
 // Template function should typically be in the header file, but if you keep it here:
 template <class UserClass>
-#if (ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 1)
 void UOpenfortSubsystem::WhenReady(UserClass *Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TMethodPtr<UserClass> Func)
-#else
-void UOpenfortSubsystem::WhenReady(UserClass *Object, typename FOpenfortSubsystemReadyDelegate::FDelegate::TUObjectMethodDelegate<UserClass>::FMethodPtr Func)
-#endif
 {
 	OnReady.AddUObject(Object, Func);
 }
@@ -125,11 +120,7 @@ void UOpenfortSubsystem::ManageBridgeDelegateQueue()
 {
 	if (bIsReady)
 	{
-#if USING_BLUI_CEF
-		OnReady.Broadcast(OpenfortBlui->GetJSConnector());
-#else
 		OnReady.Broadcast(BrowserWidget->GetJSConnector());
-#endif
 		OnReady.Clear();
 	}
 }
@@ -141,42 +132,7 @@ void UOpenfortSubsystem::SetupGameBridge()
 		return;
 	}
 	bHasSetupGameBridge = true;
-
-#if USING_BLUI_CEF
-	// Create the Blui
-	if (!OpenfortBlui)
-	{
-		OpenfortBlui = NewObject<UOpenfortBlui>();
-		OpenfortBlui->Init();
-	}
-
-	if (!OpenfortBlui)
-	{
-		OPENFORT_ERR("Failed to create UOpenfortBlui")
-		return;
-	}
-	if (!OpenfortBlui->GetJSConnector().IsValid())
-	{
-		OPENFORT_ERR("JSConnector not available, can't set up subsystem-ready event chain")
-		return;
-	}
-
-	// Set up ready event chain
-	if (!IsReady())
-	{
-		OpenfortBlui->GetJSConnector()->AddCallbackWhenBridgeReady(
-			UOpenfortJSConnector::FOnBridgeReadyDelegate::FDelegate::CreateUObject(this, &UOpenfortSubsystem::OnBridgeReady));
-	}
-
-	// Prepare OpenfortSDK
-	if (!OpenfortSDK)
-	{
-		OpenfortSDK = NewObject<UOpenfortOpenfortSDK>(this);
-		if (OpenfortSDK)
-			OpenfortSDK->Setup(OpenfortBlui->GetJSConnector());
-	}
-
-#else
+	
 	// Create the browser widget
 	if (!BrowserWidget)
 	{
@@ -215,7 +171,6 @@ void UOpenfortSubsystem::SetupGameBridge()
 			OpenfortSDK->Setup(BrowserWidget->GetJSConnector());
 		}
 	}
-#endif
 }
 
 void UOpenfortSubsystem::OnViewportCreated()

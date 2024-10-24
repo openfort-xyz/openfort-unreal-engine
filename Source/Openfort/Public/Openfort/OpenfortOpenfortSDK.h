@@ -3,12 +3,12 @@
 #include "CoreMinimal.h"
 #include "JsonObjectConverter.h"
 #include "Misc/EngineVersion.h"
+#include "Engine/TimerHandle.h"
 #include "Runtime/Core/Public/HAL/Platform.h"
 #include "UObject/Object.h"
 #include "Openfort/OpenfortJSConnector.h"
 #include "Openfort/OpenfortDataTypes.h"
 #include "Openfort/OpenfortRequests.h"
-
 #include "OpenfortOpenfortSDK.generated.h"
 
 template <typename UStructType>

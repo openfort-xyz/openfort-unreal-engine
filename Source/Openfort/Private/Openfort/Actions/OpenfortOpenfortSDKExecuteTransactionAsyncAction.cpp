@@ -58,8 +58,8 @@ void UOpenfortOpenfortSDKExecuteTransactionAsyncAction::OnHttpRequestComplete(FH
 		if (FJsonSerializer::Deserialize(Reader, JsonObject) && JsonObject.IsValid())
 		{
 			FString UserOperationHash, TransactionIntentId;
-			JsonObject->TryGetStringField("userOperationHash", UserOperationHash);
-			JsonObject->TryGetStringField("transactionIntentId", TransactionIntentId);
+			JsonObject->TryGetStringField(TEXT("userOperationHash"), UserOperationHash);
+			JsonObject->TryGetStringField(TEXT("transactionIntentId"), TransactionIntentId);
 
 			TransactionSent.Broadcast(TEXT(""), TransactionIntentId, UserOperationHash);
 		}

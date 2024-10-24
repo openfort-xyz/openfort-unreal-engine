@@ -85,7 +85,7 @@ void UOpenfortBrowserUserWidget::OnWidgetRebuilt()
 	Super::OnWidgetRebuilt();
 }
 
-TWeakObjectPtr<class UOpenfortJSConnector> UOpenfortBrowserUserWidget::GetJSConnector() const
+TWeakObjectPtr<UOpenfortJSConnector> UOpenfortBrowserUserWidget::GetJSConnector() const
 {
 	if (!Browser)
 	{

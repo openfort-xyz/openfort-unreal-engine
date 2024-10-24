@@ -1,9 +1,10 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "OpenfortBrowserWidget.h"
-
 #include "Openfort/Misc/OpenfortLogging.h"
 #include "Openfort/OpenfortJSConnector.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
 #if USING_BUNDLED_CEF
 #include "SWebBrowser.h"
 #endif
@@ -60,8 +61,9 @@ bool UOpenfortBrowserWidget::IsPageLoaded() const
 {
 #if USING_BUNDLED_CEF
 	return WebBrowserWidget.IsValid() && WebBrowserWidget->IsLoaded();
-#endif
+#else
 	return false;
+#endif
 }
 
 void UOpenfortBrowserWidget::ExecuteJS(const FString &ScriptText) const

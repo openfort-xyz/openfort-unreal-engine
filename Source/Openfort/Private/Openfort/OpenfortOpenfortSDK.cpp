@@ -391,7 +391,8 @@ void UOpenfortOpenfortSDK::OnAuthenticateWithOAuthResponse(FOpenfortJSResponse R
 			return;
 		}
 		FPoolOAuthRequest Data{InitOAuthFlowData->key};
-		PoolOAuth(Data, ResponseDelegate);
+		
+		PoolOAuth(Data, ResponseDelegate.GetValue());
 #endif
 	}
 }

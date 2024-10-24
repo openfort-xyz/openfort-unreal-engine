@@ -15,16 +15,19 @@
   "IsExperimentalVersion": true,
   "Installed": true,
   "EnabledByDefault": true,
+  "EngineVersion" : "5.4.0",
   "Modules": [
     {
       "Name": "Openfort",
       "Type": "Runtime",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [ "Win64", "Mac", "IOS", "Android" ]
     },
     {
       "Name": "OpenfortEditor",
       "Type": "Editor",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [ "Win64", "Mac", "IOS", "Android" ]
     }
   ],
   "Plugins": [
@@ -33,9 +36,8 @@
       "Enabled": true
     },
     {
-      "Name": "BLUI",
-      "Enabled": true,
-      "Optional": true
+      "Name": "OnlineSubsystem",
+      "Enabled": true
     }
   ]
 }
