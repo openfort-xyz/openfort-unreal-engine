@@ -7,11 +7,11 @@
       Website
     </a>
     <span> | </span>
-    <a href="https://www.openfort.xyz/docs">
+    <a href="https://www.openfort.xyz/docs/reference/unreal-engine">
       Documentation
     </a>
     <span> | </span>
-    <a href="https://www.openfort.xyz/docs/api">
+    <a href="https://www.openfort.xyz/docs/reference/api/introduction">
       API Docs
     </a>
     <span> | </span>
@@ -38,3 +38,21 @@ See the included sample widgets in All->Plugins->Openfort Content in the Unreal 
 ### C++
 Check out the OpenfortSDK.h file for the C++ OpenfortSDK API. In order to know the list of methods to call for the OpenfortSDK Login Flow and the OpenfortSDK Log out Flow, follow the same sequence of steps as the Blueprint widget examples below.
 
+## Support
+
+| Build Platform | Unreal Engine Version | Windows | MacOS | iOS | Android |
+|:--------------:|:---------------------:|---------|-------|-----|---------|
+| Windows        | 5.0.3                 | ✅       | ❌     | ❌   | ✅       |
+|                | 5.2.1                 | ✅       | ?     | ?   | ✅       |
+|           | 5.3              | ❌       | ✅     | ✅   | ✅       |
+|           | 5.4                | ❌       | ✅     | ✅   | ✅       |
+| macOS          | 5.2.1                 | ❌       | ✅     | ✅   | ✅       |
+|           | 5.3                 | ❌       | ✅     | ✅   | ✅       |
+|           | 5.4                | ❌       | ✅     | ✅   | ✅       |
+
+### Mac
+The plugin currently makes use of the [Web Browser](https://dev.epicgames.com/documentation/en-us/unreal-engine/API/Runtime/WebBrowser) runtime module which bundles [CEF3](https://www.magpcss.org/ceforum/index.php). Changes to the engine are currently required for modern xcode targets as Unreal Engine does not properly link the framework during packaging. This requires either an engine patch or moving the framework post-build and then codesigning your build again.
+
+In the [CEF3.build.cs](https://github.com/EpicGames/UnrealEngine/blob/release/Engine/Source/ThirdParty/CEF3/CEF3.build.cs#L102) you need to bypass the `if` check for modern xcode. This can be accomplished by adding `|| true` to the end of the if check on line 102.
+
+Additionally, you need to add `bCompileCEF3 = true;` to your build target.
