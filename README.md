@@ -26,10 +26,10 @@
 # Openfort UE5 SDK
 
 ## Installation
-1. Since .uasset and .umap files are stored on Git Large File Storage, you must download and install git-lfs from here before cloning the respository
-2. Clone the unreal-openfort-sdk repository or download the zip/tarball from one of the versions here
-3. Copy the cloned repo into your project's Plugins folder, e.g.: MyGame/Plugins/unreal-openfort-sdk
-4. Restart your project (Unreal Editor & IDE), upon restart it should load the unreal-sdk-plugin and should be good to use
+Since `.uasset` and `.umap` files are stored on Git Large File Storage, you must [download and install git-lfs](https://git-lfs.com/) before cloning the repository.
+1. Clone the [openfort-unreal-sdk](https://github.com/openfort-xyz/openfort-unreal-engine) repository.
+2. Copy the cloned repo into your project's `Plugins` folder, e.g.: `MyGame/Plugins/openfort-unreal-sdk`.
+3. Restart your project (Unreal Editor & Jetbrains Rider IDE), upon restart it should load the` unreal-sdk-plugin` and should be good to use.
 
 ## Setup
 ### Blueprint
